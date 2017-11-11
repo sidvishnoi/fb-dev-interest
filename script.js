@@ -1,1 +1,1 @@
-document.write(".. and world");
+document.body.style.backgroundColor = color;
