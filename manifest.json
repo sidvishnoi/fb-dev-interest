@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+  "name": "Facebook Dev Circles Merge",
+  "description": "Shows results from all the Facebook Dev Circle groups based on your interests",
+  "version": "1.0",
+  "page_action":
+  {
+    "default_icon": "icon.png",
+    "default_popup": "index.html",
+    "default_title": "Facebook Dev Interests"
+  },
+  "background":
+  {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "permissions": [
+    "declarativeContent"
+  ]
+}
