@@ -12,8 +12,14 @@
     "scripts": ["background.js"],
     "persistent": false
   },
+  "options_page": "options/index.html",
+  "web_accessible_resources": [
+    "format-date.js",
+    "fb-dev-merge.js"
+  ],
   "permissions": [
     "declarativeContent",
-    "activeTab"
+    "activeTab",
+    "storage"
   ]
 }
