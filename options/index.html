@@ -11,7 +11,13 @@
     </label>
     <button>Save API Key</button>
   </form>
-  <button id="fetchGroups">Fetch Groups</button>
+  <form id="limit_groups">
+    <label>Select Groups to Blacklist <span id="blacklist_summary"></span></label>
+    <select name="groups" id="groups" multiple>
+      <option value="-1" disabled>Select Groups to blacklist</option>
+    </select>
+    <button>Blacklist Selected Groups</button>
+  </form>
   <script src="options.js"></script>
 </body>
 </html>
