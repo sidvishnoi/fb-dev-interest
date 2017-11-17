@@ -1,4 +1,4 @@
-const asyncParallel = function (tasks, cb) {
+function asyncParallel(tasks, cb) {
   var results, pending, keys
   var isSync = true
 
@@ -11,8 +11,8 @@ const asyncParallel = function (tasks, cb) {
     pending = keys.length
   }
 
-  function done (err) {
-    function end () {
+  function done(err) {
+    function end() {
       if (cb) cb(err, results)
       cb = null
     }
@@ -20,7 +20,7 @@ const asyncParallel = function (tasks, cb) {
     else end()
   }
 
-  function each (i, err, result) {
+  function each(i, err, result) {
     results[i] = result
     if (--pending === 0 || err) {
       done(err)
@@ -32,13 +32,13 @@ const asyncParallel = function (tasks, cb) {
     done(null)
   } else if (keys) {
     // object
-    keys.forEach(function (key) {
-      tasks[key](function (err, result) { each(key, err, result) })
+    keys.forEach(function(key) {
+      tasks[key](function(err, result) { each(key, err, result) })
     })
   } else {
     // array
-    tasks.forEach(function (task, i) {
-      task(function (err, result) { each(i, err, result) })
+    tasks.forEach(function(task, i) {
+      task(function(err, result) { each(i, err, result) })
     })
   }
 
@@ -62,6 +62,10 @@ function getBlacklistedGroups(callback) {
   });
 }
 
+function getInterestKeywords(callback) {
+  chrome.storage.sync.get('keywords', (res) => callback(null, res.keywords || []));
+}
+
 function injectScriptFile(fname, callback) {
   const s = document.createElement('script');
   s.src = chrome.extension.getURL(fname);
@@ -76,13 +80,15 @@ console.log('injecting..');
 asyncParallel({
   getAccessToken,
   getBlacklistedGroups,
+  getInterestKeywords,
 }, (err, results) => {
-  // inject scripts to page https://stackoverflow.com/questions/9515704/insert-code-into-the-page-context-using-a-content-script
+  // inject scripts to page
+  // https://stackoverflow.com/questions/9515704/insert-code-into-the-page-context-using-a-content-script
   var script = document.createElement('script');
   script.textContent = `var fbDevInterest = {
-    API_KEY: '${results.getAccessToken}',
-    BLACKLIST: [${results.getBlacklistedGroups}],
-    PREFERENCES: {},
+    _apiKey: '${results.getAccessToken}',
+    _blacklist: [${results.getBlacklistedGroups}],
+    _keywords: new Set([${results.getInterestKeywords.map(v => `"${v}"`)}]),
     }`;
   (document.head||document.documentElement).appendChild(script);
   script.remove();

@@ -1,17 +1,29 @@
-function getParameterByName(name, url) {
-    if (!url) url = window.location.href;
-    name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-        results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, " "));
+// js smooth scroll
+// https://jsfiddle.net/s61x7c4e/
+function scrollToItem(element, duration = 1000) {
+  const getElementY = (el) => window.pageYOffset + el.getBoundingClientRect().top;
+  const easing = (t) => t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1;
+  var startingY = window.pageYOffset;
+  var elementY = getElementY(element);
+  var targetY = ((document.body.scrollHeight - elementY < window.innerHeight) ? document.body.scrollHeight - window.innerHeight : elementY) - 100;
+  var diff = targetY - startingY;
+  var start;
+  if (!diff) return;
+  window.requestAnimationFrame(function step(timestamp) {
+    if (!start) start = timestamp;
+    var time = timestamp - start;
+    var percent = Math.min(time / duration, 1);
+    percent = easing(percent);
+    window.scrollTo(0, startingY + diff * percent);
+    if (time < duration) window.requestAnimationFrame(step);
+  });
 }
 
-var ALL_GROUPS = [1378294582253698,249598592040574,2224932161064321,1924443867832338,1922538421363451,1920036621597031,1903916609822504,1841081392797911,1806620552895262,1780072415645281,1741843536047014,1724152667880378,1607133026028061,1494181493938081,1443394385967980,1258355007573190,1152576018114322,1148469218498930,1075017422642967,1074858042611323,1071045349642536,1041205739348709,893652180764182,886528924818522,886251554842166,885490321621308,854314664699156,826341790867138,813879575430133,811281355669013,793016410839401,786453984830109,638854212931776,499881580381233,485698195138488,476463749198108,428973767504677,402137910152010,362906487478469,348458995586076,332006040559709,313087542449350,309450039518404,304477986647756,293458267749614,265793323822652,199036970608482,187217085094857,186924858495604,160941794378470,152127978670639,132580147377707,125327974795168,111858152705945]; // all public groups
+var ALL_GROUPS = [249598592040574,1378294582253698,2224932161064321,1924443867832338,1922538421363451,1920036621597031,1903916609822504,1841081392797911,1806620552895262,1780072415645281,1741843536047014,1724152667880378,1607133026028061,1494181493938081,1443394385967980,1258355007573190,1152576018114322,1148469218498930,1075017422642967,1074858042611323,1071045349642536,1041205739348709,893652180764182,886251554842166,885490321621308,854314664699156,826341790867138,813879575430133,811281355669013,793016410839401,786453984830109,638854212931776,485698195138488,476463749198108,428973767504677,402137910152010,362906487478469,348458995586076,332006040559709,313087542449350,309450039518404,304477986647756,293458267749614,265793323822652,223094988221674,199036970608482,187217085094857,186924858495604,160941794378470,152127978670639,132580147377707,125327974795168,111858152705945]; // all public groups
 
-for (let group of fbDevInterest.BLACKLIST) {
-  let idx = ALL_GROUPS.indexOf(parseInt(group, 10));
+// remove blacklisted groups
+for (let groupId of fbDevInterest._blacklist) {
+  let idx = ALL_GROUPS.indexOf(parseInt(groupId, 10));
   ALL_GROUPS.splice(idx, 1);
 }
 
@@ -23,7 +35,7 @@ fbDevInterest.createPlaceholder = function() {
   return placeholder;
 };
 
-fbDevInterest.BASE_API_URL = `https://graph.facebook.com/v2.11/GROUPID/?&access_token=${fbDevInterest.API_KEY}&fields=name,feed{message,updated_time,created_time,id,name,from,permalink_url},id,updated_time`;
+fbDevInterest.BASE_API_URL = `https://graph.facebook.com/v2.11/GROUPID/?&access_token=${fbDevInterest._apiKey}&fields=name,feed{message,updated_time,created_time,id,name,from,permalink_url},id,updated_time`;
 
 // gets a group id from ALL_GROUPS list
 fbDevInterest.getGroupId = (function *() {
@@ -34,11 +46,20 @@ fbDevInterest.getGroupId = (function *() {
   })();
 
 fbDevInterest.parent = document.querySelector('#pagelet_group_pager'); // feed parent
-fbDevInterest.state = {}; // stores last update time by group
+fbDevInterest.state = {}; // stores next fetch urls for group and group names
+
+
+fbDevInterest.satisfiesFilters = function(content) {
+  const contentKeywords = new Set(content.toLowerCase().split(' '));
+  const matches = this._keywords.intersection(contentKeywords);
+  console.log(matches)
+  return matches.size > 0;
+}
 
 // appends a post in feed
 fbDevInterest.showPost = function(entry, group) {
   if (!entry.message) return;
+  if (!this.satisfiesFilters(entry.message)) return;
   entry.message = entry.message.replace(/\n/g, "<br />");
   const created_time = new Date(entry.created_time);
 
@@ -74,7 +95,7 @@ fbDevInterest.showPost = function(entry, group) {
   else this.parent.appendChild(p);
 };
 
-// gets feed json
+// gets feed json and shows posts
 fbDevInterest.getGroupFeed = function(options) {
   let fetchUrl = this.BASE_API_URL
     .replace('GROUPID', options.groupId)
@@ -82,6 +103,8 @@ fbDevInterest.getGroupFeed = function(options) {
   if (state && state.nextPageUrl) {
     fetchUrl = state.nextPageUrl;
   }
+
+  console.log(fetchUrl)
 
   fetch(fetchUrl)
     .then((res) => res.json())
@@ -117,6 +140,7 @@ fbDevInterest.getFeed = function() {
   this.clearPosts();
   const placeholder = this.createPlaceholder();
   for (let i = 0; i < 5; ++i) this.parent.appendChild(placeholder);
+  scrollToItem(this.parent);
   this.getGroupFeed({ groupId: this.getGroupId.next().value });
 };
 
@@ -131,8 +155,11 @@ fbDevInterest.showPostsOnScroll = function() {
   const a = document.querySelectorAll('._4mrt._5jmm._5pat._5v3q._4-u8');
   const last = a[a.length -1 ];
   const onVisible = function(e) {
+    if (!last) return self.getGroupFeed({ groupId: self.getGroupId.next().value });
     if (isScrolledIntoView(last)) {
       window.removeEventListener('scroll', onVisible, true);
+      const placeholder = self.createPlaceholder();
+      for (let i = 0; i < 5; ++i) self.parent.appendChild(placeholder);
       self.getGroupFeed({ groupId: self.getGroupId.next().value });
     }
   };

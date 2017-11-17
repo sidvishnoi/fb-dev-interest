@@ -60,3 +60,21 @@ function blacklistGroups(e) {
   }
   chrome.storage.sync.set({'groups': values}, () => limit_groups_form.groups.classList.add('success'));
 };
+
+
+// interest keywords
+const set_keywords_form = document.getElementById('set_keywords');
+
+chrome.storage.sync.get('keywords', (response) => {
+  if (response.keywords) {
+    const keywords = response.keywords.join(', ');
+    set_keywords_form.keywords.value = keywords;
+  }
+});
+
+set_keywords_form.addEventListener('submit', addKeywords);
+function addKeywords(e) {
+  e.preventDefault();
+  const keywords = set_keywords_form.keywords.value.split(/,\s*/);
+  chrome.storage.sync.set({'keywords': keywords}, () => set_keywords_form.keywords.classList.add('success'));
+}
