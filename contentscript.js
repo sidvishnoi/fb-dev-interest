@@ -23,7 +23,10 @@ console.log('injecting..')
 getAccessToken((apiKey) => {
   // inject scripts to page https://stackoverflow.com/questions/9515704/insert-code-into-the-page-context-using-a-content-script
   var script = document.createElement('script');
-  script.textContent = `const FB_DEV_MERGE_API_KEY = '${apiKey}';`; // make api key available to injected script
+  script.textContent = `const fbDevInterest = {
+    API_KEY: '${apiKey}', // make api key available to injected script
+    PREFERENCES: {},
+    }`;
   (document.head||document.documentElement).appendChild(script);
   script.remove();
 
