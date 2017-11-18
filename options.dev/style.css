@@ -1,0 +1,110 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: none;
+  color: blue;
+}
+
+body {
+  display: flex;
+  background: #e9ebee;
+  color: #1d2129;
+  padding: 1vh 2vw;
+  margin: 1em auto;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  min-height: 96vh;
+}
+
+#root {
+  background: #fff;
+  padding: 1em;
+  width: 100%;
+  box-shadow: 1px 1px 7px 0px #ddd;
+  flex: 1;
+}
+
+#root > div > form, #root > div > div {
+  padding: 1em 0;
+}
+
+input {
+  max-width: 100%;
+  border: 0;
+  outline: none;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+a.hint {
+  background: #365899;
+  color: #fff;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+a.hint:hover {
+  background: #4267b2;
+}
+
+h3 {
+  color: #444;
+  margin: 3px 0;
+}
+
+.apikey_form .form-group {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+.apikey_form input {
+  position: relative;
+  padding: 7px 2px;
+  flex: 1;
+  cursor: text;
+  font-size: 12px;
+  font-family: monospace;
+  border: 1px solid #eee;
+  border-radius: 2px;
+  color: #555;
+}
+.apikey_form input:focus {
+  border-color: #ddd;
+}
+
+.apikey_form button, .react-tags__selected-tag {
+  background-color: #f6f7f9;
+  color: #4b4f56;
+  border: none;
+  line-height: 26px;
+  padding: 0 10px;
+  transition: 200ms cubic-bezier(.08,.52,.52,1) background-color, 200ms cubic-bezier(.08,.52,.52,1) box-shadow, 200ms cubic-bezier(.08,.52,.52,1) transform;
+  border: 1px solid #ced0d4;
+  border-radius: 2px;
+  box-sizing: content-box;
+  font-size: 12px;
+  margin: 0 1px;
+  -webkit-font-smoothing: antialiased;
+  font-weight: bold;
+  position: relative;
+}
+.apikey_form button:hover, .react-tags__selected-tag:hover{
+  background: #e9ebee;
+  cursor: pointer;
+}
+.apikey_form button:focus, .apikey_form button:active, .react-tags__selected-tag:focus, .react-tags__selected-tag:active{
+  box-shadow: 0 0 1px 2px rgba(88, 144, 255, .75), 0 1px 1px rgba(0, 0, 0, .15);
+  outline: none;
+}
+
+.page-title {
+  font-size: 2em;
+  padding: 1em 0 0.3em;
+  margin-bottom: 1em;
+  border-bottom: 4px solid #4267b2;
+}

@@ -47,12 +47,12 @@ function asyncParallel(tasks, cb) {
 
 // get access token from saved extension settings
 function getAccessToken(callback) {
-  chrome.storage.sync.get('apiKey', (res) => {
-    if (!res.apiKey) {
+  chrome.storage.sync.get('apikey', (res) => {
+    if (!res.apikey) {
       alert('API key not set.');
       return callback('API key not set.')
     };
-    callback(null, res.apiKey);
+    callback(null, res.apikey);
   });
 }
 
@@ -66,6 +66,7 @@ function getInterestKeywords(callback) {
   chrome.storage.sync.get('keywords', (res) => callback(null, res.keywords || []));
 }
 
+// inject scripts to page: https://stackoverflow.com/a/9517879
 function injectScriptFile(fname, callback) {
   const s = document.createElement('script');
   s.src = chrome.extension.getURL(fname);
@@ -76,22 +77,26 @@ function injectScriptFile(fname, callback) {
   (document.head||document.documentElement).appendChild(s);
 }
 
-console.log('injecting..');
+function injectScriptText(str) {
+  var script = document.createElement('script');
+  script.textContent = str;
+  (document.head||document.documentElement).appendChild(script);
+  script.remove();
+}
+
 asyncParallel({
   getAccessToken,
   getBlacklistedGroups,
   getInterestKeywords,
 }, (err, results) => {
-  // inject scripts to page
-  // https://stackoverflow.com/questions/9515704/insert-code-into-the-page-context-using-a-content-script
-  var script = document.createElement('script');
-  script.textContent = `var fbDevInterest = {
+  if (err) return alert(err.message || err);
+
+  const keywords = [...results.getInterestKeywords].map(k => k.name);
+  injectScriptText(`var fbDevInterest = {
     _apiKey: '${results.getAccessToken}',
     _blacklist: [${results.getBlacklistedGroups}],
-    _keywords: new Set([${results.getInterestKeywords.map(v => `"${v}"`)}]),
-    }`;
-  (document.head||document.documentElement).appendChild(script);
-  script.remove();
+    _keywords: new Set([${keywords.map(v => `'${v}'`)}]),
+    }`);
 
   injectScriptFile('utils.js', function(){
     injectScriptFile('fb-dev-merge.js');

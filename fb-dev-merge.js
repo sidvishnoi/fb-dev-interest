@@ -35,9 +35,10 @@ fbDevInterest.createPlaceholder = function() {
   return placeholder;
 };
 
-fbDevInterest.BASE_API_URL = `https://graph.facebook.com/v2.11/GROUPID/?&access_token=${fbDevInterest._apiKey}&fields=name,feed{message,updated_time,created_time,id,name,from,permalink_url},id,updated_time`;
+fbDevInterest.BASE_API_URL = `https://graph.facebook.com/v2.11/GROUPID/?&access_token=${fbDevInterest._apiKey}&fields=name,id,feed{message,id,name,from,permalink_url,full_picture,link,created_time}`;
 
 // gets a group id from ALL_GROUPS list
+fbDevInterest.getGroupId = {};
 fbDevInterest.getGroupId = (function *() {
     let i = -1;
     while (true) {
@@ -50,6 +51,7 @@ fbDevInterest.state = {}; // stores next fetch urls for group and group names
 
 
 fbDevInterest.satisfiesFilters = function(content) {
+  if (this._keywords.size === 0) return true;
   const contentKeywords = new Set(content.toLowerCase().split(' '));
   const matches = this._keywords.intersection(contentKeywords);
   console.log(matches)
@@ -60,8 +62,16 @@ fbDevInterest.satisfiesFilters = function(content) {
 fbDevInterest.showPost = function(entry, group) {
   if (!entry.message) return;
   if (!this.satisfiesFilters(entry.message)) return;
-  entry.message = entry.message.replace(/\n/g, "<br />");
+  entry.message = entry.message.replace(/\n/g, "</p><p>").linkify();
+  if (entry.link && !entry.full_picture) {
+    entry.message = `${entry.message} </p><p>[<a href="${entry.link}" target="_blank">${entry.link}</a>]`;
+  }
+
   const created_time = new Date(entry.created_time);
+
+  const image = (entry.full_picture && !entry.full_picture.includes('//external.'))
+    ? `<div class="_3x-2"><div><div class="mtm"><div><a class="_4-eo _2t9n _50z9" ajaxify="${entry.link}&player_origin=groups" data-ploi="${entry.full_picture}&player_origin=groups" href="${entry.link}" data-render-location="group"><div class="uiScaledImageContainer _517g"><img class="scaledImageFitWidth img" src="${entry.full_picture}"></div></a></div></div></div></div>`
+    : '';
 
   const basePost = `
     <div class="_3ccb">
@@ -79,6 +89,7 @@ fbDevInterest.showPost = function(entry, group) {
           </div>
           <div class="_5pbx userContent _22jv _3576">
             <p>${entry.message}</p>
+            ${image}
           </div>
           <div></div>
         </div>
@@ -109,6 +120,7 @@ fbDevInterest.getGroupFeed = function(options) {
   fetch(fetchUrl)
     .then((res) => res.json())
     .then(json => {
+      if (json.error) throw json.error;
       if (!json.feed) {
         if (!Array.isArray(json.data)) {
           throw `failed to fetch: ${fetchUrl}`;
@@ -123,7 +135,17 @@ fbDevInterest.getGroupFeed = function(options) {
       }
       this.showPostsOnScroll();
     })
-    .catch(console.error);
+    .catch((err) => {
+      if (err) {
+        const p = document.createElement('div');
+        p.classList.add(...'_4-u2 mbm _4mrt _5jmm _5pat _5v3q _4-u8'.split(' '));
+        p.innerHTML = `<div class="_3ccb"><div class="_5pcr userContentWrapper"><div class="_1dwg _1w_m _q7o"><div class="_5pbx userContent _22jv _3576">
+          <pre>${JSON.stringify(err, null, 2)}</pre>
+          </div></div></div></div>`;
+        p.style.color = 'red';
+        this.parent.appendChild(p);
+      }
+    });
 };
 
 fbDevInterest.clearPosts = function() {

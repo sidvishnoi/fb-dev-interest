@@ -1,3 +1,3 @@
 # fb-dev-interest
 
-A Chrome Extension to help organise group notification based on user interests through Hashtags.
+A Chrome extension that filters through Facebook Dev Circles around the world to get only the interesting posts in your feed.
