@@ -31,10 +31,11 @@ fbDevInterest.state = {}; // stores next fetch urls for group and group names
 
 fbDevInterest.satisfiesFilters = function(content) {
   if (this._keywords.size === 0) return true;
-  const contentKeywords = new Set(content.toLowerCase().split(' '));
-  const matches = this._keywords.intersection(contentKeywords);
-  console.log(matches)
-  return matches.size > 0;
+  const $content = content.toLowerCase();
+  for (const keyword of this._keywords) {
+    if ($content.includes(keyword)) return true;
+  }
+  return false;
 }
 
 // appends a post in feed

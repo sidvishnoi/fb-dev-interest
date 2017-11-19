@@ -1,13 +1,3 @@
-Set.prototype.intersection = function(setB) {
-  const intersection = new Set();
-  for (const elem of setB) {
-    if (this.has(elem)) {
-      intersection.add(elem);
-    }
-  }
-  return intersection;
-};
-
 // js smooth scroll
 // https://jsfiddle.net/s61x7c4e/
 function scrollToItem(element, duration = 1000) {
