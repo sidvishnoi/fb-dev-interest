@@ -85,6 +85,217 @@ fbDevInterest.splitPostBody = function(content) {
   return postBody;
 }
 
+
+fbDevInterest.showComments = function(json, parent) {
+  const self = this;
+  const addComment = function (e, p) {
+    console.log(e);
+    const created_time = new Date(e.created_time);
+    const commentHtml = `
+      <div class="_3b-9">
+        <div>
+          <div direction="left" class="clearfix">
+            <div class="_ohe lfloat"><a target="_blank" href="https://www.facebook.com/${e.from.id}" class="img _8o _8s UFIImageBlockImage" tabindex="-1" aria-hidden="true"><img alt="${e.from.name}" class="img UFIActorImage _54ru img" src="https://graph.facebook.com/${e.from.id}/picture?&access_token=${self._apiKey}&type=normal"></a></div>
+            <div class="">
+              <div class="UFIImageBlockContent _42ef">
+                <div class="UFICommentContentBlock">
+                  <div class="UFICommentContent">
+                    <span class="UFICommentActorAndBody">
+                      <span class=""><a class=" UFICommentActorName" target="_blank" href="https://www.facebook.com/${e.from.id}">${e.from.name}</a></span>
+                      <span class="UFICommentBody"><span>${e.message.linkify()}</span></span>
+                    </span>
+                    <div class="fsm fwn fcg UFICommentActions"><span class="_6a _3-me">
+                    </span><a class="uiLinkSubtle" href="${e.permalink_url}" target="_blank"><abbr class="livetimestamp" title="${created_time.format('dddd, d MMMM yyyy at hh:mm')}" data-shorten="true">${created_time.format('d MMMM at HH:mm')}</abbr></a></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const comment = document.createElement('div');
+    comment.classList.add(...'UFIRow _48ph _48pi UFIComment _4oep'.split(' '));
+    comment.style.borderTop = 'none';
+    comment.innerHTML = commentHtml;
+    p.appendChild(comment);
+    return comment;
+  }
+  const addReply = function (e, p) {
+    const created_time = new Date(e.created_time);
+    const replyHtml = `
+      <div class="_3b-9">
+        <div>
+          <div direction="left" class="clearfix">
+            <div class="_ohe lfloat">
+              <a target="_blank" href="https://www.facebook.com/${e.from.id}" class="img _8o _8s UFIImageBlockImage" tabindex="-1" aria-hidden="true"><img alt="${e.from.name}" class="img UFIActorImage _54ru img" src="https://graph.facebook.com/${e.from.id}/picture?&access_token=${self._apiKey}&type=normal"></a>
+            </div>
+            <div class="">
+              <div class="UFIImageBlockContent _42ef">
+                <div class="UFICommentContentBlock">
+                  <div class="UFICommentContent">
+                    <span class="UFICommentActorAndBody">
+                      <span class=""><a class=" UFICommentActorName" target="_blank" href="https://www.facebook.com/${e.from.id}">${e.from.name}</a></span>
+                      <span class="UFICommentBody"><span>${e.message.linkify()}</span></span>
+                    </span>
+                    <div class="fsm fwn fcg UFICommentActions"><span class="_6a _3-me">
+                    </span><a class="uiLinkSubtle" href="${e.permalink_url}" target="_blank"><abbr class="livetimestamp" title="${created_time.format('dddd, d MMMM yyyy at hh:mm')}" data-shorten="true">${created_time.format('d MMMM at HH:mm')}</abbr></a></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    const reply = document.createElement('div');
+    reply.classList.add(...'UFIRow _48ph _48pi _4204 UFIComment _4oep'.split(' '));
+    reply.style.borderLeftWidth = '2px';
+    reply.innerHTML = replyHtml;
+    p.appendChild(reply);
+    return reply;
+  }
+
+  if (!json.comments) return;
+  for (const $comment of json.comments.data) {
+    const comment = addComment($comment, parent);
+    const replyList = document.createElement('div');
+    replyList.classList.add('UFIReplyList');
+    parent.appendChild(replyList);
+    if (!$comment.comments) continue;
+    for (const $reply of $comment.comments.data) {
+      const reply = addReply($reply, replyList)
+    }
+  }
+}
+
+fbDevInterest.getComments = function(postid, parent) {
+  const createCommentArea = function(pid, p) {
+    const html = `
+      <div class="UFIRow UFIPagerRow _4oep _48pi _4204">
+        <div direction="right" class="clearfix">
+          <div class="_ohf rfloat"></div>
+          <div class=""><a class="UFIPagerLink" target="_blank" href="https://facebook.com/${pid}" role="button">View all comments</a></div>
+        </div>
+      </div>
+    `;
+
+    const commentsArea = document.createElement('form');
+    commentsArea.classList.add('commentable_item');
+    p.appendChild(commentsArea);
+
+    const c0 = document.createElement('div');
+    c0.classList.add(...'uiUfi UFIContainer _5pc9 _5vsj _5v9k'.split(' '));
+    commentsArea.appendChild(c0);
+
+    const c1 = document.createElement('div');
+    c1.classList.add('UFIList');
+    c1.innerHTML = `<h6 class="accessible_elem">Comments</h6>`;
+    c0.appendChild(c1);
+
+    const c2 = document.createElement('div');
+    c2.classList.add(...'_3b-9 _j6a'.split(' '));
+    c1.appendChild(c2);
+
+    const c3 = document.createElement('div');
+    c3.innerHTML = html;
+    c2.appendChild(c3);
+
+
+    return c3;
+  }
+  const commentsArea = createCommentArea(postid, parent);
+
+  const fetchUrl = `https://graph.facebook.com/v2.11/${postid}/?&access_token=${fbDevInterest._apiKey}&fields=comments{from,permalink_url,message,created_time,comments{from,permalink_url,message,created_time}},permalink_url`;
+  console.log(fetchUrl);
+  fetch(fetchUrl)
+    .then(res => res.json())
+    .then(json => this.showComments(json, commentsArea))
+    .catch(console.error);
+}
+
+
+fbDevInterest.showPostButtons = function(entry, parent) {
+  const self = this;
+
+  const el = document.createElement('div');
+  el.classList.add(...'_sa_ _gsd _fgm _5vsi _192z'.split(' '));
+  const el1 = document.createElement('div');
+  el.classList.add('_37uu');
+  el.appendChild(el1);
+
+  const el2 = document.createElement('div');
+  el1.appendChild(el2);
+
+  const el3 = document.createElement('div');
+  el3.classList.add('_57w');
+  el2.appendChild(el3);
+
+  const el4 = document.createElement('div');
+  el4.classList.add(...'_3399 _a7s _20h6 _610i _125r clearfix _zw3'.split(' '));
+  el3.appendChild(el4);
+
+  const el5 = document.createElement('div');
+  el5.classList.add('_524d');
+  el4.appendChild(el5);
+
+  const el6 = document.createElement('div');
+  el6.classList.add('_42nr');
+  el5.appendChild(el6);
+
+  const likeButton_1 = document.createElement('span');
+  likeButton_1.classList.add('_1mto');
+  el6.appendChild(likeButton_1);
+
+  const likeButton_2 = document.createElement('div');
+  likeButton_2.classList.add(...'_khz _4sz1'.split(' '));
+  likeButton_1.appendChild(likeButton_2);
+
+  const likeButton_3 = document.createElement('a');
+  likeButton_3.classList.add(...'UFILikeLink _4x9- _4x9_ _48-k'.split(' '));
+  likeButton_3.href = '#';
+  likeButton_3.setAttribute('role', 'button');
+  likeButton_3.innerText = 'Like';
+  likeButton_2.appendChild(likeButton_3);
+
+
+  const commentButton_1 = document.createElement('span');
+  commentButton_1.classList.add('_1mto');
+  el6.appendChild(commentButton_1);
+
+  const commentButton_2 = document.createElement('div');
+  commentButton_2.classList.add(...'_6a _15-7 _3h-u'.split(' '));
+  commentButton_1.appendChild(commentButton_2);
+
+  const commentButton_3 = document.createElement('a');
+  commentButton_3.classList.add(...'comment_link _5yxe'.split(' '));
+  commentButton_3.href = '#';
+  commentButton_3.setAttribute('role', 'button');
+  commentButton_3.innerText = 'Comment';
+  function _showComments() {
+    self.getComments(entry.id, parent);
+    this.removeEventListener('click', _showComments);
+  }
+  commentButton_3.addEventListener('click', _showComments);
+  commentButton_2.appendChild(commentButton_3);
+
+  // el.innerHTML = `
+  //   <div class="_37uu">
+  //     <div>
+  //       <div class="_57w">
+  //         <div class="_3399 _a7s _20h6 _610i _125r clearfix _zw3">
+  //           <div class="_524d">
+  //             <div class="_42nr"><span class="_1mto"><span class="_27de"><a href="#" data-testid="ufi_share_link_placeholder" class="share_action_link _5f9b" role="button" tabindex="0" title="Send this to friends or post it on your Timeline.">Share<span class="UFIShareLinkSpinner _1wfk img _55ym _55yn _55yo _5tqs" role="progressbar" aria-valuetext="Loading..." aria-busy="true" aria-valuemin="0" aria-valuemax="100"></span></a></span></span>
+  //             </div>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   </div>
+  //   `;
+  parent.appendChild(el);
+  return el;
+}
 // appends a post in feed
 fbDevInterest.showPost = function(entry, group) {
   if (!entry.message) return;
@@ -109,9 +320,9 @@ fbDevInterest.showPost = function(entry, group) {
       <div class="_5pcr userContentWrapper">
         <div class="_1dwg _1w_m _q7o">
           <h5 class="_5pbw fwb">
-            <a href="https://www.facebook.com/${entry.from.id}">${entry.from.name}</a>
+            <a target="_blank" href="https://www.facebook.com/${entry.from.id}">${entry.from.name}</a>
     ‎         ▶
-            <a href="https://www.facebook.com/${group.id}">${group.name}</a>
+            <a target="_blank" href="https://www.facebook.com/${group.id}">${group.name}</a>
           </h5>
           <div class="_5pcp _5lel _232_"><span class="_5paw _14zs"><a class="_3e_2 _14zr" href="#"></a></span><span role="presentation" aria-hidden="true"> · </span><span class="fsm fwn fcg"><a class="_5pcq" href="${entry.permalink_url}" target="_blank"><abbr title="${created_time.format('dddd, d MMMM yyyy at HH:mm')}" class="_5ptz"><span class="timestampContent">${created_time.format('d MMMM at HH:mm')}</span></abbr>
             </a>
@@ -134,6 +345,8 @@ fbDevInterest.showPost = function(entry, group) {
   const placeholder = document.querySelector('._3-u2.mbm._2iwp._4-u8')
   if (placeholder) this.parent.replaceChild(p, placeholder)
   else this.parent.appendChild(p);
+  this.showPostButtons(entry, p);
+  p.appendChild(commentButton);
 };
 
 // gets feed json and shows posts

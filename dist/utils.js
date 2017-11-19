@@ -37,16 +37,16 @@ String.prototype.linkify = function() {
   var hashtagPattern = /(^|\s)#(\w+)/g;
 
   return this
-    .replace(hashtagPattern, '$1<a href="https://www.facebook.com/hashtag/$2" target="_blank">#$2</a>')
-    .replace(urlPattern, '<a href="$&">$&</a>')
-    .replace(pseudoUrlPattern, '$1<a href="http://$2">$2</a>')
-    .replace(emailAddressPattern, '<a href="mailto:$&">$&</a>');
+    .replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
+    .replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
+    .replace(emailAddressPattern, '<a href="mailto:$&">$&</a>')
+    .replace(hashtagPattern, '$1<a href="https://www.facebook.com/hashtag/$2" target="_blank">#$2</a>');
 };
 
 /**
  * Date Format
  * Copyright (c) 2011, marlun78
- * MIT License, https://gist.github.com/marlun78/bd0800cf5e8053ba9f83
+ * MIT License, https://gist.github.com/marlun78/1351171
  */
 (function () {
 
