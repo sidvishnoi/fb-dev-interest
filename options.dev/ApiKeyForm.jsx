@@ -35,7 +35,7 @@ class ApiKeyForm extends React.Component {
            <h3>Facebook Graph API Key (App Token) <a target="_blank" className="hint" href="https://developers.facebook.com/tools/accesstoken/">?</a></h3>
          </label>
          <div className="form-group">
-          <input type="text" name="apikey" id="apikey" value={this.state.value} onChange={this.handleChange} spellcheck="false" required/>
+          <input type="text" name="apikey" id="apikey" value={this.state.value} onChange={this.handleChange} spellCheck="false" required/>
           <button>{this.state.status}</button>
          </div>
        </form>

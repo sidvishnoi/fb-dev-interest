@@ -1,9 +1,9 @@
-var ALL_GROUPS = [249598592040574,1378294582253698,2224932161064321,1924443867832338,1922538421363451,1920036621597031,1903916609822504,1841081392797911,1806620552895262,1780072415645281,1741843536047014,1724152667880378,1607133026028061,1494181493938081,1443394385967980,1258355007573190,1152576018114322,1148469218498930,1075017422642967,1074858042611323,1071045349642536,1041205739348709,893652180764182,886251554842166,885490321621308,854314664699156,826341790867138,813879575430133,811281355669013,793016410839401,786453984830109,638854212931776,485698195138488,476463749198108,428973767504677,402137910152010,362906487478469,348458995586076,332006040559709,313087542449350,309450039518404,304477986647756,293458267749614,265793323822652,223094988221674,199036970608482,187217085094857,186924858495604,160941794378470,152127978670639,132580147377707,125327974795168,111858152705945]; // all public groups
-
 // remove blacklisted groups
-for (let groupId of fbDevInterest._blacklist) {
-  let idx = ALL_GROUPS.indexOf(parseInt(groupId, 10));
-  ALL_GROUPS.splice(idx, 1);
+fbDevInterest.clearBlacklist = function() {
+  for (let groupId of this._blacklist) {
+    let idx = this.ALL_GROUPS.indexOf(parseInt(groupId, 10));
+    this.ALL_GROUPS.splice(idx, 1);
+  }
 }
 
 fbDevInterest.createPlaceholder = function() {
@@ -18,35 +18,85 @@ fbDevInterest.BASE_API_URL = `https://graph.facebook.com/v2.11/GROUPID/?&access_
 
 // gets a group id from ALL_GROUPS list
 fbDevInterest.getGroupId = {};
-fbDevInterest.getGroupId = (function *() {
-    let i = -1;
+fbDevInterest.getGroupId = function () {
+  const self = this;
+  let i = -1;
+  return (function *() {
     while (true) {
-      yield this.ALL_GROUPS[++i % ALL_GROUPS.length];
+      yield self.ALL_GROUPS[++i % self.ALL_GROUPS.length];
     };
   })();
+}
 
 fbDevInterest.parent = document.querySelector('#pagelet_group_mall'); // feed parent
 fbDevInterest.state = {}; // stores next fetch urls for group and group names
 
-
-fbDevInterest.satisfiesFilters = function(content) {
-  if (this._keywords.size === 0) return true;
+// find matching keywords in post body
+fbDevInterest.findMatchedKeywords = function(content) {
+  if (this._keywords.size === 0) return [[0, 0]];
   const $content = content.toLowerCase();
+  const matches = [];
   for (const keyword of this._keywords) {
-    if ($content.includes(keyword)) return true;
+    const re = new RegExp(`(?:^|\\b)(${keyword.replace(/\s\s+/g, '\\s*')})(?=\\b|$)`);
+    const match = $content.match(re);
+    if (match) matches.push([match.index, match[0].length])
   }
-  return false;
+  function compare(a,b) {
+    if (a[0] < b[0]) return -1;
+    if (a[0] > b[0]) return 1;
+    if (a[1] < b[1]) return 1; // to have larger keyword before
+    if (a[1] > b[1]) return -1;
+    return 0;
+  }
+  return matches.sort(compare);
+}
+
+// highlight matched keywords in post body
+fbDevInterest.highlightMatches = function(str, matches) {
+  let $str = ''
+  let pos;
+  let flag = 0;
+  const alreadyIncludedStart = new Set();
+  for (let i = 0; i < matches.length; ++i) {
+    pos = (i === 0) ? 0 : matches[i-1][0] + matches[i-1][1];
+    const [ $start, $length ] = matches[i];
+    if (alreadyIncludedStart.has($start)) {
+      flag = matches[i-1][0] + matches[i-1][1];
+      continue; // to prevent highlight again if a smaller keyword in a larger keyword
+    }
+    alreadyIncludedStart.add($start);
+    $str += `${str.substring(flag !== 0 ? flag : pos, $start)}<mark>${str.substring($start, $start + $length)}</mark>`;
+    flag = 0;
+  }
+  const lastMatch = matches[matches.length - 1];
+  $str += str.substring(lastMatch[0] + lastMatch[1]);
+  return $str;
+}
+
+// split post body if too long
+fbDevInterest.splitPostBody = function(content) {
+  const splitted = content.split('</p>');
+  if (splitted.length < 6) return content;
+  const visible = splitted.slice(0, 6).join('</p>');
+  const hidden = splitted.slice(6).join('</p>');
+
+  const id = Math.random().toString().replace('.', '');
+  const postBody = `<div id="id_${id}" class="text_exposed_root">${visible}<span class="text_exposed_hide">...</span><div class="text_exposed_show">${hidden}</div><span class="text_exposed_hide"> <span class="text_exposed_link"><a class="see_more_link" onclick="var func = function(e) { e.preventDefault(); }; var parent = Parent.byClass(this, 'text_exposed_root'); if (parent && parent.getAttribute('id') == 'id_${id}') { CSS.addClass(parent, 'text_exposed'); Arbiter.inform('reflow'); }; func(event); "><span class="see_more_link_inner">See more</span></a></span></span></div>`;
+  return postBody;
 }
 
 // appends a post in feed
 fbDevInterest.showPost = function(entry, group) {
   if (!entry.message) return;
-  if (!this.satisfiesFilters(entry.message)) return;
+  const matchedKeywords = this.findMatchedKeywords(entry.message);
+  if (matchedKeywords.length === 0) return;
+  if (this._highlightMatches) entry.message = this.highlightMatches(entry.message, matchedKeywords);
   entry.message = entry.message.replace(/\n/g, "</p><p>").linkify();
-  if (entry.link && !entry.full_picture) {
-    entry.message = `${entry.message} </p><p>[<a href="${entry.link}" target="_blank">${entry.link}</a>]`;
-  }
 
+  if (entry.link && !entry.full_picture) {
+    entry.message = `${entry.message} </p><p>[<b>LINK:</b> <a href="${entry.link}" target="_blank">${entry.link}</a>]`;
+  }
+  entry.message = this.splitPostBody(entry.message);
   const created_time = new Date(entry.created_time);
 
   const image = (entry.full_picture && !entry.full_picture.includes('//external.'))
@@ -58,7 +108,7 @@ fbDevInterest.showPost = function(entry, group) {
       <div></div>
       <div class="_5pcr userContentWrapper">
         <div class="_1dwg _1w_m _q7o">
-          <h5>
+          <h5 class="_5pbw fwb">
             <a href="https://www.facebook.com/${entry.from.id}">${entry.from.name}</a>
     ‎         ▶
             <a href="https://www.facebook.com/${group.id}">${group.name}</a>
@@ -94,8 +144,6 @@ fbDevInterest.getGroupFeed = function(options) {
   if (state && state.nextPageUrl) {
     fetchUrl = state.nextPageUrl;
   }
-
-  console.log(fetchUrl)
 
   fetch(fetchUrl)
     .then((res) => res.json())
@@ -139,6 +187,8 @@ fbDevInterest.clearPosts = function() {
 };
 
 fbDevInterest.getFeed = function() {
+  this.clearBlacklist();
+  this.getGroupId = this.getGroupId();
   this.clearPosts();
   for (let i = 0; i < 5; ++i) this.parent.appendChild(this.createPlaceholder());
   scrollToItem(this.parent);
@@ -160,7 +210,3 @@ fbDevInterest.showPostsOnScroll = function() {
   };
   window.addEventListener('scroll', onVisible, true)
 }
-
-console.log('<<< fbDevInterest >>>');
-fbDevInterest.parent.innerHTML = '';
-fbDevInterest.getFeed();

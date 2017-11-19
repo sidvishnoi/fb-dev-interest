@@ -6,30 +6,41 @@
 
 a {
   text-decoration: none;
-  color: blue;
 }
 
 body {
   display: flex;
-  background: #e9ebee;
+  background: #4267b2;
   color: #1d2129;
   padding: 1vh 2vw;
   margin: 1em auto;
   font-family: Helvetica, Arial, sans-serif;
-  font-size: 12px;
+  font-size: 16px;
   min-height: 96vh;
 }
 
 #root {
   background: #fff;
-  padding: 1em;
+  /*padding: 1em;*/
   width: 100%;
-  box-shadow: 1px 1px 7px 0px #ddd;
+  box-shadow: 1px 1px 3px 0px #333;
   flex: 1;
+  border-radius: 6px;
+}
+
+.page-title {
+  font-size: 2em;
+  padding: 1em 0 0.3em;
+  /*margin-bottom: 1em;*/
+  background: #264075;
+  color: #fff;
+  padding: 1em;
+  /*border-bottom: 4px solid #4267b2;*/
 }
 
 #root > div > form, #root > div > div {
-  padding: 1em 0;
+  padding: 1em;
+  background: #fff;
 }
 
 input {
@@ -100,11 +111,4 @@ h3 {
 .apikey_form button:focus, .apikey_form button:active, .react-tags__selected-tag:focus, .react-tags__selected-tag:active{
   box-shadow: 0 0 1px 2px rgba(88, 144, 255, .75), 0 1px 1px rgba(0, 0, 0, .15);
   outline: none;
-}
-
-.page-title {
-  font-size: 2em;
-  padding: 1em 0 0.3em;
-  margin-bottom: 1em;
-  border-bottom: 4px solid #4267b2;
 }

@@ -52,7 +52,7 @@
   background: #ecf0f7;
 
   /* match the font styles */
-  font-size: inherit;
+  font-size: 15px !important;
   line-height: inherit;
   font-weight: normal !important;
 }
