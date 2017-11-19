@@ -115,8 +115,4 @@ asyncParallel({
       fbDevInterest.getFeed();
     `);
   });
-
-  // injectScriptFile('utils.js', function(){
-  //   injectScriptFile('inject.js');
-  // });
 });

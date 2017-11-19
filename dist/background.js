@@ -16,7 +16,7 @@ chrome.runtime.onInstalled.addListener(function() {
 
 chrome.pageAction.onClicked.addListener((tab) => {
   chrome.tabs.executeScript(tab.id,
-    {code: `document.mark.style.background = '#ecf0f7';`},
+    {code: `document.body.style.background = '#e9ebee';`},
     function() {
     chrome.tabs.executeScript(tab.id, { file: 'contentscript.js' });
   });
