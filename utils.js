@@ -8,15 +8,40 @@ Set.prototype.intersection = function(setB) {
   return intersection;
 };
 
+// js smooth scroll
+// https://jsfiddle.net/s61x7c4e/
+function scrollToItem(element, duration = 1000) {
+  const getElementY = (el) => window.pageYOffset + el.getBoundingClientRect().top;
+  const easing = (t) => t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1;
+  var startingY = window.pageYOffset;
+  var elementY = getElementY(element);
+  var targetY = ((document.body.scrollHeight - elementY < window.innerHeight) ? document.body.scrollHeight - window.innerHeight : elementY) - 100;
+  var diff = targetY - startingY;
+  var start;
+  if (!diff) return;
+  window.requestAnimationFrame(function step(timestamp) {
+    if (!start) start = timestamp;
+    var time = timestamp - start;
+    var percent = Math.min(time / duration, 1);
+    percent = easing(percent);
+    window.scrollTo(0, startingY + diff * percent);
+    if (time < duration) window.requestAnimationFrame(step);
+  });
+}
+
+function isScrolledIntoView(el) {
+  var elemTop = el.getBoundingClientRect().top;
+  var elemBottom = el.getBoundingClientRect().bottom;
+  var isVisible = elemTop < window.innerHeight && elemBottom >= 0;
+  return isVisible;
+}
+
 // https://gist.github.com/skattyadz/1501387
 String.prototype.linkify = function() {
-
   // http://, https://, ftp://
   var urlPattern = /\b(?:https?|ftp):\/\/[a-z0-9-+&@#\/%?=~_|!:,.;]*[a-z0-9-+&@#\/%=~_|]/gim;
-
   // www. sans http:// or https://
   var pseudoUrlPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-
   // Email addresses
   var emailAddressPattern = /\w+@[a-zA-Z_]+?(?:\.[a-zA-Z]{2,6})+/gim;
 
