@@ -1,4 +1,26 @@
-// remove blacklisted groups
+// util to create elements
+fbDevInterest.createElement = function(type, options) {
+  const el = document.createElement(type);
+  if (options.classList) el.classList.add(...options.classList.split(' '));
+  if (options.attrs) {
+    for (const attr in options.attrs) {
+      el.setAttribute(attr, options.attrs[attr]);
+    }
+  }
+  if (options.innerHTML) el.innerHTML = options.innerHTML;
+  if (options.events) {
+    for (const event in options.events) {
+      el.addEventListener(event, options.events[event]);
+    }
+  }
+  if (options.parent) options.parent.appendChild(el);
+  return el;
+}
+
+fbDevInterest.BASE_API_URL = `https://graph.facebook.com/v2.11/GROUPID/?&access_token=${fbDevInterest._apiKey}&fields=name,id,feed{message,id,name,from,permalink_url,full_picture,link,created_time}`;
+fbDevInterest.COMMENTS_API_URL = `https://graph.facebook.com/v2.11/POSTID/?&access_token=${fbDevInterest._apiKey}&fields=comments{from,permalink_url,message,created_time,comments{from,permalink_url,message,created_time}},permalink_url`
+
+// remove blacklisted groups from ALL_GROUPS
 fbDevInterest.clearBlacklist = function() {
   for (const groupId of this._blacklist) {
     const idx = this.ALL_GROUPS.indexOf(parseInt(groupId, 10));
@@ -22,15 +44,15 @@ fbDevInterest.clearBlacklist = function() {
   }
 }
 
+// creates a placeholder post
 fbDevInterest.createPlaceholder = function() {
   const fbfeed_placeholder_story = `<div class="_2iwo _3f3l" data-testid="fbfeed_placeholder_story"><div class="_2iwq"><div class="_1enb"></div><div class="_2iwr"></div><div class="_2iws"></div><div class="_2iwt"></div><div class="_2iwu"></div><div class="_2iwv"></div><div class="_2iww"></div><div class="_2iwx"></div><div class="_2iwy"></div><div class="_2iwz"></div><div class="_2iw-"></div><div class="_2iw_"></div><div class="_2ix0"></div></div></div>`;
-  const placeholder = document.createElement('div');
-  placeholder.classList.add(...'_3-u2 mbm _2iwp _4-u8'.split(' '));
-  placeholder.innerHTML = fbfeed_placeholder_story;
-  return placeholder;
+  return this.createElement('div', {
+    classList: '_3-u2 mbm _2iwp _4-u8',
+    innerHTML: fbfeed_placeholder_story,
+    parent: this.parent,
+  });
 };
-
-fbDevInterest.BASE_API_URL = `https://graph.facebook.com/v2.11/GROUPID/?&access_token=${fbDevInterest._apiKey}&fields=name,id,feed{message,id,name,from,permalink_url,full_picture,link,created_time}`;
 
 // gets a group id from ALL_GROUPS list
 fbDevInterest.getGroupId = {};
@@ -89,6 +111,218 @@ fbDevInterest.highlightMatches = function(str, matches) {
   return $str;
 }
 
+fbDevInterest.showComments = function(json, parent) {
+  const self = this;
+
+  const getMessageHtml = function(e) {
+    const created_time = new Date(e.created_time);
+    return `
+      <div class="_3b-9">
+        <div>
+          <div direction="left" class="clearfix">
+            <div class="_ohe lfloat"><a target="_blank" href="https://www.facebook.com/${e.from.id}" class="img _8o _8s UFIImageBlockImage" tabindex="-1" aria-hidden="true"><img alt="${e.from.name}" class="img UFIActorImage _54ru img" src="https://graph.facebook.com/${e.from.id}/picture?&access_token=${self._apiKey}&type=normal"></a></div>
+            <div class="">
+              <div class="UFIImageBlockContent _42ef">
+                <div class="UFICommentContentBlock">
+                  <div class="UFICommentContent">
+                    <span class="UFICommentActorAndBody">
+                      <span class="">
+                        <a class=" UFICommentActorName" target="_blank" href="https://www.facebook.com/${e.from.id}">${e.from.name}</a>
+                      </span>
+                      <span class="UFICommentBody"><span>${e.message.linkify()}</span></span>
+                    </span>
+                    <div class="fsm fwn fcg UFICommentActions"><span class="_6a _3-me"></span>
+                      <a class="uiLinkSubtle" href="${e.permalink_url}" target="_blank">
+                        <abbr class="livetimestamp" title="${created_time.format('dddd, d MMMM yyyy at hh:mm')}" data-shorten="true">${created_time.format('d MMMM at HH:mm')}</abbr>
+                      </a>
+                      <!-- </span> -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const addComment = function (e, p) {
+    const comment = self.createElement('div', {
+      classList: 'UFIRow _48ph _48pi UFIComment _4oep',
+      parent: p,
+      innerHTML: getMessageHtml(e),
+      attrs: { style: 'border-top: none' },
+    });
+    return comment;
+  }
+
+  const addReply = function (e, p) {
+    const reply = self.createElement('div', {
+      classList: 'UFIRow _48ph _48pi _4204 UFIComment _4oep',
+      parent: p,
+      innerHTML: getMessageHtml(e),
+      attrs: { style: 'border-left-width: 2px' },
+    });
+    return reply;
+  }
+
+  const commentsTrigger = document.getElementById(`comment_trigger_${json.id}`);
+  commentsTrigger.innerHTML = 'View all comments'
+  if (!json.comments) {
+    commentsTrigger.innerHTML = 'No comments yet.'
+    return;
+  };
+
+  for (const $comment of json.comments.data) {
+    const comment = addComment($comment, parent);
+    if (!$comment.comments) continue;
+    const replyList = self.createElement('div', { classList: 'UFIReplyList', parent: parent });
+    for (const $reply of $comment.comments.data) {
+      const reply = addReply($reply, replyList);
+    }
+  }
+}
+
+// gets comments for a post and shows them
+fbDevInterest.getComments = function(postid, parent) {
+  const self = this;
+  const createCommentArea = function(pid, p) {
+    const html = `
+      <div class="UFIRow UFIPagerRow _4oep _48pi _4204">
+        <div direction="right" class="clearfix">
+          <div class="_ohf rfloat"></div>
+          <div class=""><a class="UFIPagerLink" id="comment_trigger_${pid}" target="_blank" href="https://facebook.com/${pid}" role="button">View all comments</a></div>
+        </div>
+      </div>
+    `;
+    const c = self.createElement('div', {
+      innerHTML: html,
+      parent: self.createElement('div', {
+        classList: '_3b-9 _j6a',
+        parent: self.createElement('div', {
+          classList: 'UFIList',
+          innerHTML: `<h6 class="accessible_elem">Comments</h6>`,
+          parent: self.createElement('div', {
+            classList: 'uiUfi UFIContainer _5pc9 _5vsj _5v9k',
+            parent: self.createElement('form', {
+              classList: 'commentable_item',
+              parent: p,
+            }),
+          }),
+        }),
+      }),
+    });
+
+    document.getElementById(`comment_trigger_${postid}`).innerHTML = `View all comments <span class="mls img _55ym _55yn _55yo" role="progressbar" aria-valuetext="Loading..." aria-busy="true" aria-valuemin="0" aria-valuemax="100"></span>`;
+
+    return c;
+  }
+  const commentsArea = createCommentArea(postid, parent);
+
+  const fetchUrl = this.COMMENTS_API_URL.replace('POSTID', postid);
+  fetch(fetchUrl)
+    .then(res => res.json())
+    .then(json => this.showComments(json, commentsArea))
+    .catch((err) => {
+      console.error(err)
+      document.getElementById(`comment_trigger_${postid}`).innerHTML = `Some error occured. Try again?`;
+    });
+}
+
+// shows like, comment and share buttons for a post
+fbDevInterest.showPostButtons = function(entry, parent) {
+  const self = this;
+  function _showComments() {
+    self.getComments(entry.id, parent);
+    this.removeEventListener('click', _showComments);
+  }
+
+  const el = self.createElement('div', {
+    classList: '_sa_ _gsd _fgm _5vsi _192z',
+    parent: parent,
+  });
+
+  const el6 = self.createElement('div', {
+    classList: '_42nr',
+    parent: self.createElement('div', {
+      classList: '_524d',
+      parent: self.createElement('div', {
+        classList: '_3399 _a7s _20h6 _610i _125r clearfix _zw3',
+        parent: self.createElement('div', {
+          classList: '_57w',
+          parent: self.createElement('div', {
+            parent: self.createElement('div', {
+              classList: '_37uu',
+              parent: el,
+            }),
+          }),
+        }),
+      }),
+    }),
+  });
+
+  const likeButton = self.createElement('a', {
+    classList: 'UFILikeLink _4x9- _4x9_ _48-k',
+    innerHTML: 'Like',
+    attrs: {
+      href: entry.permalink_url,
+      target: '_blank',
+    },
+    parent: self.createElement('div', {
+      classList: '_khz _4sz1',
+      parent: self.createElement('span', {
+        classList: '_1mto',
+        parent: el6,
+      }),
+    }),
+  });
+
+  const commentButton = self.createElement('a', {
+    classList: 'comment_link _5yxe',
+    innerHTML: 'Comment',
+    attrs: {
+      href: '#',
+      role: 'button',
+    },
+    events: {
+      click: _showComments,
+    },
+    parent: self.createElement('div', {
+      classList: '_6a _15-7 _3h-u',
+      parent: self.createElement('span', {
+        classList: '_1mto',
+        parent: el6,
+      }),
+    }),
+  });
+
+  const shareButton = self.createElement('a', {
+    classList: 'share_action_link _5f9b',
+    innerHTML: 'Share',
+    attrs: {
+      href: entry.permalink_url,
+      target: '_blank',
+    },
+    parent: self.createElement('div', {
+      classList: '_27de',
+      parent: self.createElement('span', {
+        classList: '_1mto',
+        parent: el6,
+      }),
+    }),
+  });
+
+  return el;
+}
+
+// appends a post in feed
+fbDevInterest.showPost = function(post) {
+  const placeholder = document.querySelector('._3-u2.mbm._2iwp._4-u8')
+  if (placeholder) this.parent.replaceChild(post, placeholder)
+  else this.parent.appendChild(post);
+}
+
 // split post body if too long
 fbDevInterest.splitPostBody = function(content) {
   const splitted = content.split('</p>');
@@ -101,344 +335,144 @@ fbDevInterest.splitPostBody = function(content) {
   return postBody;
 }
 
-
-fbDevInterest.showComments = function(json, parent) {
+// creates a post
+fbDevInterest.createPost = function(entry, group) {
   const self = this;
-  const addComment = function (e, p) {
-    const created_time = new Date(e.created_time);
-    const commentHtml = `
-      <div class="_3b-9">
-        <div>
-          <div direction="left" class="clearfix">
-            <div class="_ohe lfloat"><a target="_blank" href="https://www.facebook.com/${e.from.id}" class="img _8o _8s UFIImageBlockImage" tabindex="-1" aria-hidden="true"><img alt="${e.from.name}" class="img UFIActorImage _54ru img" src="https://graph.facebook.com/${e.from.id}/picture?&access_token=${self._apiKey}&type=normal"></a></div>
-            <div class="">
-              <div class="UFIImageBlockContent _42ef">
-                <div class="UFICommentContentBlock">
-                  <div class="UFICommentContent">
-                    <span class="UFICommentActorAndBody">
-                      <span class=""><a class=" UFICommentActorName" target="_blank" href="https://www.facebook.com/${e.from.id}">${e.from.name}</a></span>
-                      <span class="UFICommentBody"><span>${e.message.linkify()}</span></span>
-                    </span>
-                    <div class="fsm fwn fcg UFICommentActions"><span class="_6a _3-me">
-                    </span><a class="uiLinkSubtle" href="${e.permalink_url}" target="_blank"><abbr class="livetimestamp" title="${created_time.format('dddd, d MMMM yyyy at hh:mm')}" data-shorten="true">${created_time.format('d MMMM at HH:mm')}</abbr></a></span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    const comment = document.createElement('div');
-    comment.classList.add(...'UFIRow _48ph _48pi UFIComment _4oep'.split(' '));
-    comment.style.borderTop = 'none';
-    comment.innerHTML = commentHtml;
-    p.appendChild(comment);
-    return comment;
-  }
-  const addReply = function (e, p) {
-    const created_time = new Date(e.created_time);
-    const replyHtml = `
-      <div class="_3b-9">
-        <div>
-          <div direction="left" class="clearfix">
-            <div class="_ohe lfloat">
-              <a target="_blank" href="https://www.facebook.com/${e.from.id}" class="img _8o _8s UFIImageBlockImage" tabindex="-1" aria-hidden="true"><img alt="${e.from.name}" class="img UFIActorImage _54ru img" src="https://graph.facebook.com/${e.from.id}/picture?&access_token=${self._apiKey}&type=normal"></a>
-            </div>
-            <div class="">
-              <div class="UFIImageBlockContent _42ef">
-                <div class="UFICommentContentBlock">
-                  <div class="UFICommentContent">
-                    <span class="UFICommentActorAndBody">
-                      <span class=""><a class=" UFICommentActorName" target="_blank" href="https://www.facebook.com/${e.from.id}">${e.from.name}</a></span>
-                      <span class="UFICommentBody"><span>${e.message.linkify()}</span></span>
-                    </span>
-                    <div class="fsm fwn fcg UFICommentActions"><span class="_6a _3-me">
-                    </span><a class="uiLinkSubtle" href="${e.permalink_url}" target="_blank"><abbr class="livetimestamp" title="${created_time.format('dddd, d MMMM yyyy at hh:mm')}" data-shorten="true">${created_time.format('d MMMM at HH:mm')}</abbr></a></span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    const reply = document.createElement('div');
-    reply.classList.add(...'UFIRow _48ph _48pi _4204 UFIComment _4oep'.split(' '));
-    reply.style.borderLeftWidth = '2px';
-    reply.innerHTML = replyHtml;
-    p.appendChild(reply);
-    return reply;
-  }
-  document.getElementById(`comment_trigger_${json.id}`).innerHTML = 'View all comments'
-  if (!json.comments) {
-    document.getElementById(`comment_trigger_${json.id}`).innerHTML = 'No comments yet.'
-    return;
-  };
-  for (const $comment of json.comments.data) {
-    const comment = addComment($comment, parent);
-    const replyList = document.createElement('div');
-    replyList.classList.add('UFIReplyList');
-    parent.appendChild(replyList);
-    if (!$comment.comments) continue;
-    for (const $reply of $comment.comments.data) {
-      const reply = addReply($reply, replyList)
-    }
-  }
-}
-
-fbDevInterest.getComments = function(postid, parent) {
-  const createCommentArea = function(pid, p) {
-    const html = `
-      <div class="UFIRow UFIPagerRow _4oep _48pi _4204">
-        <div direction="right" class="clearfix">
-          <div class="_ohf rfloat"></div>
-          <div class=""><a class="UFIPagerLink" id="comment_trigger_${pid}" target="_blank" href="https://facebook.com/${pid}" role="button">View all comments</a></div>
-        </div>
-      </div>
-    `;
-
-    const commentsArea = document.createElement('form');
-    commentsArea.classList.add('commentable_item');
-    p.appendChild(commentsArea);
-
-    const c0 = document.createElement('div');
-    c0.classList.add(...'uiUfi UFIContainer _5pc9 _5vsj _5v9k'.split(' '));
-    commentsArea.appendChild(c0);
-
-    const c1 = document.createElement('div');
-    c1.classList.add('UFIList');
-    c1.innerHTML = `<h6 class="accessible_elem">Comments</h6>`;
-    c0.appendChild(c1);
-
-    const c2 = document.createElement('div');
-    c2.classList.add(...'_3b-9 _j6a'.split(' '));
-    c1.appendChild(c2);
-
-    const c3 = document.createElement('div');
-    c3.innerHTML = html;
-    c2.appendChild(c3);
-
-    document.getElementById(`comment_trigger_${postid}`).innerHTML = `View all comments <span class="mls img _55ym _55yn _55yo" role="progressbar" aria-valuetext="Loading..." aria-busy="true" aria-valuemin="0" aria-valuemax="100"></span>`;
-
-    return c3;
-  }
-  const commentsArea = createCommentArea(postid, parent);
-
-  const fetchUrl = `https://graph.facebook.com/v2.11/${postid}/?&access_token=${fbDevInterest._apiKey}&fields=comments{from,permalink_url,message,created_time,comments{from,permalink_url,message,created_time}},permalink_url`;
-  fetch(fetchUrl)
-    .then(res => res.json())
-    .then(json => this.showComments(json, commentsArea))
-    .catch((error) => document.getElementById(`comment_trigger_${postid}`).innerHTML = `Try again`);
-}
-
-
-fbDevInterest.showPostButtons = function(entry, parent) {
-  const self = this;
-
-  const el = document.createElement('div');
-  el.classList.add(...'_sa_ _gsd _fgm _5vsi _192z'.split(' '));
-  const el1 = document.createElement('div');
-  el.classList.add('_37uu');
-  el.appendChild(el1);
-
-  const el2 = document.createElement('div');
-  el1.appendChild(el2);
-
-  const el3 = document.createElement('div');
-  el3.classList.add('_57w');
-  el2.appendChild(el3);
-
-  const el4 = document.createElement('div');
-  el4.classList.add(...'_3399 _a7s _20h6 _610i _125r clearfix _zw3'.split(' '));
-  el3.appendChild(el4);
-
-  const el5 = document.createElement('div');
-  el5.classList.add('_524d');
-  el4.appendChild(el5);
-
-  const el6 = document.createElement('div');
-  el6.classList.add('_42nr');
-  el5.appendChild(el6);
-
-  const likeButton_1 = document.createElement('span');
-  likeButton_1.classList.add('_1mto');
-  el6.appendChild(likeButton_1);
-
-  const likeButton_2 = document.createElement('div');
-  likeButton_2.classList.add(...'_khz _4sz1'.split(' '));
-  likeButton_1.appendChild(likeButton_2);
-
-  const likeButton_3 = document.createElement('a');
-  likeButton_3.classList.add(...'UFILikeLink _4x9- _4x9_ _48-k'.split(' '));
-  likeButton_3.href = entry.permalink_url;
-  likeButton_3.setAttribute('target', '_blank');
-  likeButton_3.innerText = 'Like';
-  likeButton_2.appendChild(likeButton_3);
-
-
-  const commentButton_1 = document.createElement('span');
-  commentButton_1.classList.add('_1mto');
-  el6.appendChild(commentButton_1);
-
-  const commentButton_2 = document.createElement('div');
-  commentButton_2.classList.add(...'_6a _15-7 _3h-u'.split(' '));
-  commentButton_1.appendChild(commentButton_2);
-
-  const commentButton_3 = document.createElement('a');
-  commentButton_3.classList.add(...'comment_link _5yxe'.split(' '));
-  commentButton_3.href = '#';
-  commentButton_3.setAttribute('role', 'button');
-  commentButton_3.innerText = 'Comment';
-  function _showComments() {
-    self.getComments(entry.id, parent);
-    this.removeEventListener('click', _showComments);
-  }
-  commentButton_3.addEventListener('click', _showComments);
-  commentButton_2.appendChild(commentButton_3);
-
-  const shareButton_1 = document.createElement('span');
-  shareButton_1.classList.add('_1mto');
-  el6.appendChild(shareButton_1);
-
-  const shareButton_2 = document.createElement('div');
-  shareButton_2.classList.add('_27de');
-  shareButton_1.appendChild(shareButton_2);
-
-  const shareButton_3 = document.createElement('a');
-  shareButton_3.classList.add(...'share_action_link _5f9b'.split(' '));
-  shareButton_3.href = entry.permalink_url;
-  shareButton_3.setAttribute('target', '_blank');
-  shareButton_3.innerText = 'Share';
-  shareButton_2.appendChild(shareButton_3);
-
-  parent.appendChild(el);
-  return el;
-}
-// appends a post in feed
-fbDevInterest.showPost = function(entry, group) {
   if (!entry.message) return;
-  const matchedKeywords = this.findMatchedKeywords(entry.message);
+
+  const matchedKeywords = self.findMatchedKeywords(entry.message);
   if (matchedKeywords.length === 0) return;
-  if (this._highlightMatches) entry.message = this.highlightMatches(entry.message, matchedKeywords);
-  entry.message = entry.message.replace(/\n/g, "</p><p>").linkify();
 
-  if (entry.link && !entry.full_picture) {
-    entry.message = `${entry.message} </p><p>[<b>LINK:</b> <a href="${entry.link}" target="_blank">${entry.link}</a>]`;
-  }
-  entry.message = this.splitPostBody(entry.message);
-  const created_time = new Date(entry.created_time);
+  const getBodyHTML = function(e, grp) {
+    let message = e.message;
+    if (self._highlightMatches) message = self.highlightMatches(message, matchedKeywords);
+    message = message.replace(/\n/g, "</p><p>").linkify();
 
-  const image = (entry.full_picture && !entry.full_picture.includes('//external.'))
-    ? `<div class="_3x-2"><div><div class="mtm"><div><a class="_4-eo _2t9n _50z9" ajaxify="${entry.link}&player_origin=groups" data-ploi="${entry.full_picture}&player_origin=groups" href="${entry.link}" data-render-location="group"><div class="uiScaledImageContainer _517g"><img class="scaledImageFitWidth img" src="${entry.full_picture}"></div></a></div></div></div></div>`
-    : '';
+    if (e.link && e.full_picture && e.full_picture.includes('//external.')) {
+      message = `${message} </p><p>[<b>LINK:</b> <a href="${e.link}" target="_blank">${e.link}</a>]`;
+    }
+    message = self.splitPostBody(message);
 
-  const basePost = `
-    <div class="_3ccb">
-      <div></div>
-      <div class="_5pcr userContentWrapper">
-        <div class="_1dwg _1w_m _q7o">
-          <h5 class="_5pbw fwb">
-            <a target="_blank" href="https://www.facebook.com/${entry.from.id}">${entry.from.name}</a>
-    ‎         ▶
-            <a target="_blank" href="https://www.facebook.com/${group.id}">${group.name}</a>
-          </h5>
-          <div class="_5pcp _5lel _232_"><span class="_5paw _14zs"><a class="_3e_2 _14zr" href="#"></a></span><span role="presentation" aria-hidden="true"> · </span><span class="fsm fwn fcg"><a class="_5pcq" href="${entry.permalink_url}" target="_blank"><abbr title="${created_time.format('dddd, d MMMM yyyy at HH:mm')}" class="_5ptz"><span class="timestampContent">${created_time.format('d MMMM at HH:mm')}</span></abbr>
-            </a>
-            </span>
+    const created_time = new Date(e.created_time);
+
+    const image = (e.full_picture && !e.full_picture.includes('//external.'))
+      ? `<div class="_3x-2"><div><div class="mtm"><div><a class="_4-eo _2t9n _50z9" ajaxify="${e.link}&player_origin=groups" data-ploi="${e.full_picture}&player_origin=groups" href="${e.link}" data-render-location="group"><div class="uiScaledImageContainer _517g"><img class="scaledImageFitWidth img" src="${e.full_picture}"></div></a></div></div></div></div>`
+      : '';
+
+    const html = `
+      <div class="_3ccb">
+        <div></div>
+        <div class="_5pcr userContentWrapper">
+          <div class="_1dwg _1w_m _q7o">
+            <h5 class="_5pbw fwb">
+              <a target="_blank" href="https://www.facebook.com/${e.from.id}">${e.from.name}</a>
+      ‎         ▶
+              <a target="_blank" href="https://www.facebook.com/${grp.id}">${grp.name}</a>
+            </h5>
+            <div class="_5pcp _5lel _232_"><span class="_5paw _14zs"><a class="_3e_2 _14zr" href="#"></a></span><span role="presentation" aria-hidden="true"> · </span><span class="fsm fwn fcg"><a class="_5pcq" href="${e.permalink_url}" target="_blank"><abbr title="${created_time.format('dddd, d MMMM yyyy at HH:mm')}" class="_5ptz"><span class="timestampContent">${created_time.format('d MMMM at HH:mm')}</span></abbr>
+              </a>
+              </span>
+            </div>
+            <div class="_5pbx userContent _22jv _3576">
+              <p>${message}</p>
+              ${image}
+            </div>
+            <div></div>
           </div>
-          <div class="_5pbx userContent _22jv _3576">
-            <p>${entry.message}</p>
-            ${image}
-          </div>
-          <div></div>
         </div>
       </div>
-    </div>
-    `;
-  const p = document.createElement('div');
-  p.classList.add(...'_4-u2 mbm _4mrt _5jmm _5pat _5v3q _4-u8'.split(' '));
-  p.id = `mall_post_${entry.id}:6:0`;
-  p.innerHTML = basePost;
+      `;
+    return html;
+  };
 
-  const placeholder = document.querySelector('._3-u2.mbm._2iwp._4-u8')
-  if (placeholder) this.parent.replaceChild(p, placeholder)
-  else this.parent.appendChild(p);
-  this.showPostButtons(entry, p);
+  const p = self.createElement('div', {
+    classList: '_4-u2 mbm _4mrt _5jmm _5pat _5v3q _4-u8',
+    innerHTML: getBodyHTML(entry, group),
+    attrs: { id: `mall_post_${entry.id}:6:0` }
+  });
+
+  self.showPost(p);
+  self.showPostButtons(entry, p);
 };
 
 // gets feed json and shows posts
 fbDevInterest.getGroupFeed = function(options) {
-  let fetchUrl = this.BASE_API_URL
-    .replace('GROUPID', options.groupId)
-  const state = this.state[options.groupId];
+  const self = this;
+  let fetchUrl = self.BASE_API_URL.replace('GROUPID', options.groupId)
+  const state = self.state[options.groupId];
   if (state && state.nextPageUrl) {
     fetchUrl = state.nextPageUrl;
   }
 
+  function handleJsonResponse(json) {
+    if (json.error) throw json.error;
+    if (!json.feed) {
+      if (!Array.isArray(json.data)) {
+        throw new Error(`failed to fetch: ${fetchUrl}`);
+      } else {
+        json.feed = json;
+      }
+    }
+    self.state[options.groupId] = self.state[options.groupId] || { name: json.name };
+    self.state[options.groupId].nextPageUrl = json.feed.paging.next;
+    for (const entry of json.feed.data) {
+      try {
+        self.createPost(entry, { name: self.state[options.groupId].name, id: options.groupId });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    self.getPostsOnScroll();
+  }
+
+  function handleJsonError(err) {
+    console.error(err);
+    const errorPost = self.createElement('div', {
+      classList: '_4-u2 mbm _4mrt _5jmm _5pat _5v3q _4-u8',
+      innerHTML: `<div class="_3ccb"><div class="_5pcr userContentWrapper"><div class="_1dwg _1w_m _q7o"><div class="_5pbx userContent _22jv _3576"><pre>${JSON.stringify(err, null, 2)}</pre></div></div></div></div>`,
+      attrs: { style: 'color: red;' },
+    });
+    self.showPost(errorPost);
+  }
+
   fetch(fetchUrl)
     .then((res) => res.json())
-    .then(json => {
-      if (json.error) throw json.error;
-      if (!json.feed) {
-        if (!Array.isArray(json.data)) {
-          throw new Error(`failed to fetch: ${fetchUrl}`);
-        } else {
-          json.feed = json;
-        }
-      }
-      this.state[options.groupId] = this.state[options.groupId] || { name: json.name };
-      this.state[options.groupId].nextPageUrl = json.feed.paging.next;
-      for (const entry of json.feed.data) {
-        this.showPost(entry, { name: this.state[options.groupId].name, id: options.groupId });
-      }
-      this.showPostsOnScroll();
-    })
-    .catch((err) => {
-      console.error(err);
-      if (err) {
-        const p = document.createElement('div');
-        p.classList.add(...'_4-u2 mbm _4mrt _5jmm _5pat _5v3q _4-u8'.split(' '));
-        p.innerHTML = `<div class="_3ccb"><div class="_5pcr userContentWrapper"><div class="_1dwg _1w_m _q7o"><div class="_5pbx userContent _22jv _3576">
-          <pre>${JSON.stringify(err, null, 2)}</pre>
-          </div></div></div></div>`;
-        p.style.color = 'red';
-        this.parent.appendChild(p);
-      }
-    });
+    .then(handleJsonResponse)
+    .catch(handleJsonError);
 };
 
-fbDevInterest.clearPosts = function() {
-  const removeElements = (elms) => Array.from(elms).forEach(el => el.remove());
-  removeElements(document.querySelectorAll('._4mrt._5jmm._5pat._5v3q._4-u8')); // posts
-  removeElements(document.querySelectorAll('._5umn')); // pinned post labels etc
-  removeElements(document.querySelectorAll('._4wcq')); // recent acitivity label etc
-
-  // XXX: prevent infinite scroll
-  window.addEventListener('scroll', (e) => e.stopPropagation(), true);
-};
-
-fbDevInterest.getFeed = function() {
-  this.clearBlacklist();
-  this.getGroupId = this.getGroupId();
-  this.clearPosts();
-  for (let i = 0; i < 5; ++i) this.parent.appendChild(this.createPlaceholder());
-  scrollToItem(this.parent);
-  this.getGroupFeed({ groupId: this.getGroupId.next().value });
-};
-
-fbDevInterest.showPostsOnScroll = function() {
+// gets more posts on scroll (replacement of fb's infinite scroll)
+fbDevInterest.getPostsOnScroll = function() {
   const self = this;
   const a = document.querySelectorAll('._4mrt._5jmm._5pat._5v3q._4-u8');
   const last = a[a.length -1 ];
   const onVisible = function(e) {
-    if (!last) return self.getGroupFeed({ groupId: self.getGroupId.next().value });
+    if (!last) return self.getGroupFeed({ groupId: self.getGroupId.next().value }); // when no post in feed yet
     if (isScrolledIntoView(last)) {
       window.removeEventListener('scroll', onVisible, true);
-      const placeholder = self.createPlaceholder();
-      for (let i = 0; i < 5; ++i) self.parent.appendChild(placeholder);
+      for (let i = 0; i < 5; ++i) self.createPlaceholder();
       self.getGroupFeed({ groupId: self.getGroupId.next().value });
     }
   };
   window.addEventListener('scroll', onVisible, true)
 }
+
+// clears feed to show custom posts
+fbDevInterest.clearPosts = function() {
+  const removeElements = (elms) => Array.from(elms).forEach(el => el.remove());
+  removeElements(document.querySelectorAll('._4mrt._5jmm._5pat._5v3q._4-u8')); // posts
+  removeElements(document.querySelectorAll('._5umn')); // pinned post labels etc
+  removeElements(document.querySelectorAll('._4wcq')); // recent activity label etc
+
+  // XXX: prevent fb's infinite scroll
+  window.addEventListener('scroll', (e) => e.stopPropagation(), true);
+};
+
+fbDevInterest.init = function() {
+  this.clearBlacklist();
+  this.clearPosts();
+  this.getGroupId = this.getGroupId();
+  for (let i = 0; i < 5; ++i) this.createPlaceholder();
+  scrollToItem(this.parent); // smooth scroll to feed start (from utils.js)
+  this.getGroupFeed({ groupId: this.getGroupId.next().value });
+};

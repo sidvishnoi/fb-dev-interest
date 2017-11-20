@@ -8,10 +8,10 @@ const UglifyJS = require("uglify-es");
 const BUILD_DIR = path.resolve(__dirname, 'dist/options');
 const APP_DIR = path.resolve(__dirname, 'options.dev');
 
-function minifyFilesBeforeCopy(content, path) {
+function minifyFilesBeforeCopy(content, $path) {
   const result = UglifyJS.minify(content.toString());
   if (result.error) {
-    console.error(result.error);
+    console.error($path, result.error);
     return content;
   }
   return result.code;

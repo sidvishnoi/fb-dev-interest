@@ -112,7 +112,7 @@ asyncParallel({
     injectScriptText(`
       console.log('<<< fbDevInterest >>>');
       fbDevInterest.parent.innerHTML = '';
-      fbDevInterest.getFeed();
+      fbDevInterest.init();
     `);
   });
 });
