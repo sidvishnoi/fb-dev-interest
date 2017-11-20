@@ -20,4 +20,7 @@ module.exports = [
   { id: 18, name: 'unity3d' },
   { id: 19, name: 'vue.js' },
   { id: 20, name: 'node.js' },
+  { id: 21, name: 'swift' },
+  { id: 22, name: 'django' },
+  { id: 20, name: 'kotlin' }
 ];
