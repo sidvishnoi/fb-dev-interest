@@ -2,11 +2,11 @@
 
 > A Chrome extension that filters through Facebook Dev Circles around the world to get only the interesting posts in your feed.
 
-## [Download the extension]('/releases/download/v1.0/Merge.FB.Dev.Cicles.by.Interests.crx')
+## [Download the extension](https://github.com/sidvishnoi/fb-dev-interest/releases/download/v1.0/Merge.FB.Dev.Cicles.by.Interests.crx)
 
 # How to Install
 
-1. Download the extension (`Merge.FB.Dev.Cicles.by.Interests.crx`) from link above or from [releases page](/releases/).
+1. Download the extension (`Merge.FB.Dev.Cicles.by.Interests.crx`) from link above or from [releases page](https://github.com/sidvishnoi/fb-dev-interest/releases/). (ignore the Chrome download warning)
 2. Drag and Drop downloaded file into Google Chrome's Extensions page ([chrome://extensions/](chrome://extensions/)).
 3. Install the extension by clicking Install button.
 4. Go to extension's options and configure.
