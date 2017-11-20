@@ -1,8 +1,24 @@
 // remove blacklisted groups
 fbDevInterest.clearBlacklist = function() {
-  for (let groupId of this._blacklist) {
-    let idx = this.ALL_GROUPS.indexOf(parseInt(groupId, 10));
-    this.ALL_GROUPS.splice(idx, 1);
+  for (const groupId of this._blacklist) {
+    const idx = this.ALL_GROUPS.indexOf(parseInt(groupId, 10));
+    if (idx > -1) this.ALL_GROUPS.splice(idx, 1);
+  }
+
+  // prioritize the group user is presently on
+  try {
+    let activeGroupId = document
+      .querySelector('meta[property=\'al:ios:url\']')
+      .content
+      .match(/id=(\d*)/)[1];
+    activeGroupId = parseInt(activeGroupId, 10);
+    // remove from ALL_GROUPS
+    const idx = this.ALL_GROUPS.indexOf(activeGroupId);
+    if (idx > -1) this.ALL_GROUPS.splice(idx, 1);
+    // add to front of ALL_GROUPS
+    this.ALL_GROUPS.unshift(activeGroupId);
+  } catch (e) {
+    // do nothing
   }
 }
 
@@ -89,7 +105,6 @@ fbDevInterest.splitPostBody = function(content) {
 fbDevInterest.showComments = function(json, parent) {
   const self = this;
   const addComment = function (e, p) {
-    console.log(e);
     const created_time = new Date(e.created_time);
     const commentHtml = `
       <div class="_3b-9">
@@ -155,8 +170,11 @@ fbDevInterest.showComments = function(json, parent) {
     p.appendChild(reply);
     return reply;
   }
-
-  if (!json.comments) return;
+  document.getElementById(`comment_trigger_${json.id}`).innerHTML = 'View all comments'
+  if (!json.comments) {
+    document.getElementById(`comment_trigger_${json.id}`).innerHTML = 'No comments yet.'
+    return;
+  };
   for (const $comment of json.comments.data) {
     const comment = addComment($comment, parent);
     const replyList = document.createElement('div');
@@ -175,7 +193,7 @@ fbDevInterest.getComments = function(postid, parent) {
       <div class="UFIRow UFIPagerRow _4oep _48pi _4204">
         <div direction="right" class="clearfix">
           <div class="_ohf rfloat"></div>
-          <div class=""><a class="UFIPagerLink" target="_blank" href="https://facebook.com/${pid}" role="button">View all comments</a></div>
+          <div class=""><a class="UFIPagerLink" id="comment_trigger_${pid}" target="_blank" href="https://facebook.com/${pid}" role="button">View all comments</a></div>
         </div>
       </div>
     `;
@@ -201,17 +219,17 @@ fbDevInterest.getComments = function(postid, parent) {
     c3.innerHTML = html;
     c2.appendChild(c3);
 
+    document.getElementById(`comment_trigger_${postid}`).innerHTML = `View all comments <span class="mls img _55ym _55yn _55yo" role="progressbar" aria-valuetext="Loading..." aria-busy="true" aria-valuemin="0" aria-valuemax="100"></span>`;
 
     return c3;
   }
   const commentsArea = createCommentArea(postid, parent);
 
   const fetchUrl = `https://graph.facebook.com/v2.11/${postid}/?&access_token=${fbDevInterest._apiKey}&fields=comments{from,permalink_url,message,created_time,comments{from,permalink_url,message,created_time}},permalink_url`;
-  console.log(fetchUrl);
   fetch(fetchUrl)
     .then(res => res.json())
     .then(json => this.showComments(json, commentsArea))
-    .catch(console.error);
+    .catch((error) => document.getElementById(`comment_trigger_${postid}`).innerHTML = `Try again`);
 }
 
 
@@ -253,8 +271,8 @@ fbDevInterest.showPostButtons = function(entry, parent) {
 
   const likeButton_3 = document.createElement('a');
   likeButton_3.classList.add(...'UFILikeLink _4x9- _4x9_ _48-k'.split(' '));
-  likeButton_3.href = '#';
-  likeButton_3.setAttribute('role', 'button');
+  likeButton_3.href = entry.permalink_url;
+  likeButton_3.setAttribute('target', '_blank');
   likeButton_3.innerText = 'Like';
   likeButton_2.appendChild(likeButton_3);
 
@@ -279,20 +297,21 @@ fbDevInterest.showPostButtons = function(entry, parent) {
   commentButton_3.addEventListener('click', _showComments);
   commentButton_2.appendChild(commentButton_3);
 
-  // el.innerHTML = `
-  //   <div class="_37uu">
-  //     <div>
-  //       <div class="_57w">
-  //         <div class="_3399 _a7s _20h6 _610i _125r clearfix _zw3">
-  //           <div class="_524d">
-  //             <div class="_42nr"><span class="_1mto"><span class="_27de"><a href="#" data-testid="ufi_share_link_placeholder" class="share_action_link _5f9b" role="button" tabindex="0" title="Send this to friends or post it on your Timeline.">Share<span class="UFIShareLinkSpinner _1wfk img _55ym _55yn _55yo _5tqs" role="progressbar" aria-valuetext="Loading..." aria-busy="true" aria-valuemin="0" aria-valuemax="100"></span></a></span></span>
-  //             </div>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  //   `;
+  const shareButton_1 = document.createElement('span');
+  shareButton_1.classList.add('_1mto');
+  el6.appendChild(shareButton_1);
+
+  const shareButton_2 = document.createElement('div');
+  shareButton_2.classList.add('_27de');
+  shareButton_1.appendChild(shareButton_2);
+
+  const shareButton_3 = document.createElement('a');
+  shareButton_3.classList.add(...'share_action_link _5f9b'.split(' '));
+  shareButton_3.href = entry.permalink_url;
+  shareButton_3.setAttribute('target', '_blank');
+  shareButton_3.innerText = 'Share';
+  shareButton_2.appendChild(shareButton_3);
+
   parent.appendChild(el);
   return el;
 }
@@ -346,7 +365,6 @@ fbDevInterest.showPost = function(entry, group) {
   if (placeholder) this.parent.replaceChild(p, placeholder)
   else this.parent.appendChild(p);
   this.showPostButtons(entry, p);
-  p.appendChild(commentButton);
 };
 
 // gets feed json and shows posts
@@ -364,7 +382,7 @@ fbDevInterest.getGroupFeed = function(options) {
       if (json.error) throw json.error;
       if (!json.feed) {
         if (!Array.isArray(json.data)) {
-          throw `failed to fetch: ${fetchUrl}`;
+          throw new Error(`failed to fetch: ${fetchUrl}`);
         } else {
           json.feed = json;
         }
@@ -377,6 +395,7 @@ fbDevInterest.getGroupFeed = function(options) {
       this.showPostsOnScroll();
     })
     .catch((err) => {
+      console.error(err);
       if (err) {
         const p = document.createElement('div');
         p.classList.add(...'_4-u2 mbm _4mrt _5jmm _5pat _5v3q _4-u8'.split(' '));

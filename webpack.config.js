@@ -1,13 +1,23 @@
-var webpack = require('webpack');
-var path = require('path');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
-var CopyWebpackPlugin = require('copy-webpack-plugin');
+const webpack = require('webpack');
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const UglifyJS = require("uglify-es");
 
-var BUILD_DIR = path.resolve(__dirname, 'dist/options');
-var APP_DIR = path.resolve(__dirname, 'options.dev');
+const BUILD_DIR = path.resolve(__dirname, 'dist/options');
+const APP_DIR = path.resolve(__dirname, 'options.dev');
 
-var config = {
+function minifyFilesBeforeCopy(content, path) {
+  const result = UglifyJS.minify(content.toString());
+  if (result.error) {
+    console.error(result.error);
+    return content;
+  }
+  return result.code;
+}
+
+const config = {
   entry: {
     options: APP_DIR + '/app.jsx',
     vendor: ['react', 'react-dom', 'react-tag-autocomplete', 'react-toggle-button'],
@@ -39,10 +49,10 @@ var config = {
     new webpack.optimize.CommonsChunkPlugin({ name: 'vendor', filename: 'vendor.bundle.js' }),
     new CopyWebpackPlugin([
       { from: 'manifest.json', to: '..' },
-      { from: 'inject.js', to: '..' },
-      { from: 'utils.js', to: '..' },
-      { from: 'contentscript.js', to: '..' },
-      { from: 'background.js', to: '..' },
+      { from: 'inject.js', to: '..', transform: minifyFilesBeforeCopy },
+      { from: 'utils.js', to: '..', transform: minifyFilesBeforeCopy },
+      { from: 'contentscript.js', to: '..', transform: minifyFilesBeforeCopy },
+      { from: 'background.js', to: '..', transform: minifyFilesBeforeCopy },
     ]),
   ],
 };
