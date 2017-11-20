@@ -68,6 +68,7 @@ fbDevInterest.getGroupId = function () {
 
 fbDevInterest.parent = document.querySelector('#pagelet_group_mall'); // feed parent
 fbDevInterest.state = {}; // stores next fetch urls for group and group names
+fbDevInterest.requestList = new Set();
 
 // find matching keywords in post body
 fbDevInterest.findMatchedKeywords = function(content) {
@@ -75,7 +76,7 @@ fbDevInterest.findMatchedKeywords = function(content) {
   const $content = content.toLowerCase();
   const matches = [];
   for (const keyword of this._keywords) {
-    const re = new RegExp(`(?:^|\\b)(${keyword.replace(/\s\s+/g, '\\s*')})(?=\\b|$)`);
+    const re = new RegExp(`(?:^|\\b)(${keyword.replace(/\s\s+/g, '\\s*').replace(/\./g, '\\.?')})(?=\\b|$)`);
     const match = $content.match(re);
     if (match) matches.push([match.index, match[0].length])
   }
@@ -220,12 +221,17 @@ fbDevInterest.getComments = function(postid, parent) {
   }
   const commentsArea = createCommentArea(postid, parent);
 
-  const fetchUrl = this.COMMENTS_API_URL.replace('POSTID', postid);
+  const fetchUrl = self.COMMENTS_API_URL.replace('POSTID', postid);
+  self.requestList.add(fetchUrl);
   fetch(fetchUrl)
     .then(res => res.json())
-    .then(json => this.showComments(json, commentsArea))
+    .then((json) => {
+      self.requestList.delete(fetchUrl);
+      self.showComments(json, commentsArea);
+    })
     .catch((err) => {
-      console.error(err)
+      console.error(err);
+      self.requestList.delete(fetchUrl);
       document.getElementById(`comment_trigger_${postid}`).innerHTML = `Some error occured. Try again?`;
     });
 }
@@ -403,18 +409,29 @@ fbDevInterest.getGroupFeed = function(options) {
   if (state && state.nextPageUrl) {
     fetchUrl = state.nextPageUrl;
   }
+  if (fetchUrl === 'False') return;
 
   function handleJsonResponse(json) {
     if (json.error) throw json.error;
     if (!json.feed) {
-      if (!Array.isArray(json.data)) {
-        throw new Error(`failed to fetch: ${fetchUrl}`);
+      if (Array.isArray(json.data)) {
+        json.feed = {
+          data: json.data,
+          paging: json.paging,
+        };
       } else {
-        json.feed = json;
+        throw new Error(`failed to fetch: ${fetchUrl}`);
       }
     }
     self.state[options.groupId] = self.state[options.groupId] || { name: json.name };
-    self.state[options.groupId].nextPageUrl = json.feed.paging.next;
+    try {
+      self.state[options.groupId].nextPageUrl = json.feed.paging.next;
+    } catch (err) {
+      // no more posts, remove group from list
+      const idx = self.ALL_GROUPS.indexOf(options.groupId);
+      self.ALL_GROUPS.splice(idx, 1);
+      self.state[options.groupId].nextPageUrl = 'False';
+    }
     for (const entry of json.feed.data) {
       try {
         self.createPost(entry, { name: self.state[options.groupId].name, id: options.groupId });
@@ -434,11 +451,17 @@ fbDevInterest.getGroupFeed = function(options) {
     });
     self.showPost(errorPost);
   }
-
+  self.requestList.add(fetchUrl);
   fetch(fetchUrl)
     .then((res) => res.json())
-    .then(handleJsonResponse)
-    .catch(handleJsonError);
+    .then((json) => {
+      self.requestList.delete(fetchUrl);
+      handleJsonResponse(json);
+    })
+    .catch((err) => {
+      self.requestList.delete(fetchUrl);
+      handleJsonError(err);
+    });
 };
 
 // gets more posts on scroll (replacement of fb's infinite scroll)
@@ -447,14 +470,26 @@ fbDevInterest.getPostsOnScroll = function() {
   const a = document.querySelectorAll('._4mrt._5jmm._5pat._5v3q._4-u8');
   const last = a[a.length -1 ];
   const onVisible = function(e) {
-    if (!last) return self.getGroupFeed({ groupId: self.getGroupId.next().value }); // when no post in feed yet
+    const groupId = self.getGroupId.next().value;
+    if (!groupId) {
+      fbDevInterest.nomore = true;
+      console.log('No more posts in criteria');
+      window.removeEventListener('scroll', onVisible, true);
+      return;
+    };
+    if (self.requestList.size > 10) return;
+    if (!last) {
+      return self.getGroupFeed({ groupId }); // when no post in feed yet
+    }
     if (isScrolledIntoView(last)) {
       window.removeEventListener('scroll', onVisible, true);
-      for (let i = 0; i < 5; ++i) self.createPlaceholder();
-      self.getGroupFeed({ groupId: self.getGroupId.next().value });
+      if (document.querySelectorAll('._3-u2.mbm._2iwp._4-u8').length < 3) {
+        for (let i = 0; i < 5; ++i) self.createPlaceholder();
+      }
+      self.getGroupFeed({ groupId });
     }
   };
-  window.addEventListener('scroll', onVisible, true)
+  if (!fbDevInterest.nomore) window.addEventListener('scroll', onVisible, true);
 }
 
 // clears feed to show custom posts

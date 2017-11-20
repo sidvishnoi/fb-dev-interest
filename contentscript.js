@@ -49,8 +49,7 @@ function asyncParallel(tasks, cb) {
 function getAccessToken(callback) {
   chrome.storage.sync.get('apikey', (res) => {
     if (!res.apikey) {
-      alert('API key not set.');
-      return callback('API key not set.')
+      return callback('API key not set. Please set the App Token in extension\'s settings');
     };
     callback(null, res.apikey);
   });

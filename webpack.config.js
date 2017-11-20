@@ -49,6 +49,7 @@ const config = {
     new webpack.optimize.CommonsChunkPlugin({ name: 'vendor', filename: 'vendor.bundle.js' }),
     new CopyWebpackPlugin([
       { from: 'manifest.json', to: '..' },
+      { from: 'icon*.png', to: '..' },
       { from: 'inject.js', to: '..', transform: minifyFilesBeforeCopy },
       { from: 'utils.js', to: '..', transform: minifyFilesBeforeCopy },
       { from: 'contentscript.js', to: '..', transform: minifyFilesBeforeCopy },

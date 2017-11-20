@@ -32,7 +32,7 @@ class ApiKeyForm extends React.Component {
     return (
       <form onSubmit={this.handleSubmit} className="apikey_form">
          <label htmlFor="apikey">
-           <h3>Facebook Graph API Key (App Token) <a target="_blank" className="hint" href="https://developers.facebook.com/tools/accesstoken/">?</a></h3>
+           <h3>Facebook Graph API Key (App Token) <a target="_blank" className="hint" href="https://developers.facebook.com/tools/accesstoken/" title="You may need to create Facebook developer account to get the App Token. The App Token is required to use the Facebook graph API.">?</a></h3>
          </label>
          <div className="form-group">
           <input type="text" name="apikey" id="apikey" value={this.state.value} onChange={this.handleChange} spellCheck="false" required/>
