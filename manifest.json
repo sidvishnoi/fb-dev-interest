@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "name": "Merge FB Dev Cicles by Interests",
+  "name": "Merge Facebook Dev Circles by Interests",
   "description": "A Chrome extension that filters through Facebook Dev Circles around the world to get only the interesting posts in your feed.",
   "version": "1.0",
   "icons":
@@ -12,7 +12,7 @@
   },
   "page_action":
   {
-    "default_title": "Merge FB Dev Cicles by Interests",
+    "default_title": "Merge Facebook Dev Circles by Interests",
     "default_icon": "icon32.png"
   },
   "background":

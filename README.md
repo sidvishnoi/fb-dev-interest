@@ -1,22 +1,21 @@
-# Merge FB Dev Cicles by Interests
+# Merge Facebook Dev Circles by Interests
 
 > A Chrome extension that filters through Facebook Dev Circles around the world to get only the interesting posts in your feed.
 
-## [Download the extension]('/releases/download/v1.0/Merge.FB.Dev.Cicles.by.Interests.crx')
+## [Download the extension]('/releases/download/v1.1/Merge.FB.Dev.Circles.by.Interests.crx')
 
 # How to Install
 
-1. Download the extension (`Merge.FB.Dev.Cicles.by.Interests.crx`) from link above or from [releases page](/releases/).
-2. Drag and Drop downloaded file into Google Chrome's Extensions page ([chrome://extensions/](chrome://extensions/)).
+1. Download the extension (`Merge.Facebook.Dev.Circles.by.Interests.crx`) from link above or from [releases page](/releases/).
+2. Drag and Drop downloaded file into Google Chrome's Extensions page (`chrome://extensions/`).
 3. Install the extension by clicking Install button.
 4. Go to extension's options and configure.
-
 
 # Configure
 
 ### App Token (required)
 
-Get your app token from [https://developers.facebook.com/tools/accesstoken/](https://developers.facebook.com/tools/accesstoken/). You might need to create a Facebook Developer Account and/or a app. Create an app if not exists and get the App Token (not User Token) and paste in App Token field in extension's options page.
+Get your app token from [https://developers.facebook.com/tools/accesstoken/](https://developers.facebook.com/tools/accesstoken/). You might need to create a Facebook Developer Account and/or a app. Create an app if not exists and get the `App Token` (not User Token) and paste in App Token field in extension's options page.
 
 The App Token is needed to authenticate Facebook's Graph API requests.
 
@@ -30,4 +29,17 @@ Enable to highlight matched keywords in posts, otherwise disable.
 
 ### Blacklist Groups
 
-Add a group's name (and make use to autocomplete) to blacklist it (avoid showing posts from that group in your feed). You might want to blacklist a group as you might not be interested in their posts or not able to understand their language.
+Add a group's name (and make use to auto-complete) to blacklist it (avoid showing posts from that group in your feed). You might want to blacklist a group as you might not be interested in their posts or not able to understand their language.
+
+# Contributing
+
+I would love your PRs. You can contribute :
+
+- by adding more keyword suggestions (edit: [/options.dev/keywords.js](/options.dev/keywords.js)).
+- letting me know of additions/removals of public Dev circle groups (edit: [/options.dev/keywords.js](/options.dev/keywords.js), you may use [/scrape-group-lists.js](/scrape-group-lists.js)).
+- Make the extension better. Fix bugs, if found. Add more features. Improve existing features.
+
+## Todo
+
+- More interactive feed.
+- Firefox add-on maybe?

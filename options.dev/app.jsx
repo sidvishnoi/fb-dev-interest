@@ -12,7 +12,7 @@ class App extends React.Component {
   render() {
     return (
       <div>
-        <h2 className="page-title">Settings: Facebook Developer Interests</h2>
+        <h2 className="page-title">Settings: Merge Facebook Dev Circles by Interests</h2>
         <ApiKeyForm/>
         <KeywordsFilter/>
         <HighlightMatches/>
