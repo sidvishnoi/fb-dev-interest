@@ -1,9 +1,2 @@
-get api key
-send api requests 
-    request one group at a time
-    filter by hashtags
-    cache results
-show in feed
-    check if fb:view-source can give something
-
+get api key via login
 readme, presentation, video and stuff
