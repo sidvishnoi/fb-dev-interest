@@ -6,6 +6,8 @@
 
 # How to Install
 
+([Video - How to Install and configure](https://www.youtube.com/watch?v=A-LR6KWdAsM))
+
 1. Download the extension (`Merge.FB.Dev.Cicles.by.Interests.crx`) from link above or from [releases page](https://github.com/sidvishnoi/fb-dev-interest/releases/). (ignore the Chrome download warning)
 2. Drag and Drop downloaded file into Google Chrome's Extensions page ([chrome://extensions/](chrome://extensions/)).
 3. Install the extension by clicking Install button.
