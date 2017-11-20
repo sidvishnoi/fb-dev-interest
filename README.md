@@ -2,6 +2,10 @@
 
 > A Chrome extension that filters through Facebook Dev Circles around the world to get only the interesting posts in your feed.
 
+[![Merge Facebook Dev Circles by Interests](https://i.imgur.com/evnMkm8.jpg)](https://www.youtube.com/watch?v=yJPD3iW6ZvY)
+*https://www.youtube.com/watch?v=yJPD3iW6ZvY*
+
+
 ## Vision
 
 Instead of having dev circles according to locations, we can now have posts from various dev circles based on our interests.
