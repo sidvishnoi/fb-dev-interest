@@ -222,10 +222,22 @@ fbDevInterest.getComments = function(postid, parent) {
   const commentsArea = createCommentArea(postid, parent);
 
   const fetchUrl = self.COMMENTS_API_URL.replace('POSTID', postid);
+
+  let cachedResult = localStorage.getItem(fetchUrl);
+  if (cachedResult) {
+    cachedResult = JSON.parse(cachedResult);
+    const minuteDiff = (new Date() - new Date(cachedResult.last_fetch_time)) / (1000*60);
+    if (minuteDiff < 10) { // 10 min cache
+      return handleJsonResponse(cachedResult);
+    }
+  }
+
   self.requestList.add(fetchUrl);
   fetch(fetchUrl)
     .then(res => res.json())
     .then((json) => {
+      json.last_fetch_time = new Date();
+      localStorage.setItem(fetchUrl, JSON.stringify(json));
       self.requestList.delete(fetchUrl);
       self.showComments(json, commentsArea);
     })
@@ -451,10 +463,22 @@ fbDevInterest.getGroupFeed = function(options) {
     });
     self.showPost(errorPost);
   }
+
+  let cachedResult = localStorage.getItem(fetchUrl);
+  if (cachedResult) {
+    cachedResult = JSON.parse(cachedResult);
+    const minuteDiff = (new Date() - new Date(cachedResult.last_fetch_time)) / (1000*60);
+    if (minuteDiff < 10) { // 10 min cache
+      return handleJsonResponse(cachedResult);
+    }
+  }
+
   self.requestList.add(fetchUrl);
   fetch(fetchUrl)
     .then((res) => res.json())
     .then((json) => {
+      json.last_fetch_time = new Date();
+      localStorage.setItem(fetchUrl, JSON.stringify(json));
       self.requestList.delete(fetchUrl);
       handleJsonResponse(json);
     })
