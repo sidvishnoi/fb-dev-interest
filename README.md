@@ -133,4 +133,5 @@ Rename the .crx file from `dist.crx` to `Merge Facebook Dev Circles by Interests
 - More interactive feed.
 - Get App Token through login SDK.
 - Track keywords with Facebook Analytics SDK.
+- Custom groups and user groups
 - Firefox add-on maybe?
