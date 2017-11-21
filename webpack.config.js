@@ -11,8 +11,8 @@ const APP_DIR = path.resolve(__dirname, 'options.dev');
 function minifyFilesBeforeCopy(content, $path) {
   const result = UglifyJS.minify(content.toString());
   if (result.error) {
-    console.error($path, result.error);
-    return content;
+    console.error($path);
+    throw result.error;
   }
   return result.code;
 }
@@ -48,6 +48,7 @@ const config = {
     new ExtractTextPlugin('[name].css'),
     new webpack.optimize.CommonsChunkPlugin({ name: 'vendor', filename: 'vendor.bundle.js' }),
     new CopyWebpackPlugin([
+      { from: path.resolve('options.dev/analytics.js'), to: 'analytics.js'},
       { from: 'manifest.json', to: '..' },
       { from: 'icon*.png', to: '..' },
       { from: 'inject.js', to: '..', transform: minifyFilesBeforeCopy },

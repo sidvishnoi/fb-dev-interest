@@ -48,12 +48,24 @@ class KeywordsFilter extends React.Component {
     this.setState({ suggestions: updatedSuggestions, tags });
 
     chrome.storage.sync.set({ keywords: tags });
+
+    // tracking
+    FB.AppEvents.logEvent('UsedKeyword', null, { keyword: tag.name });
+    const isNewKeyword = !(keywords.find(k => k.name === tag.name));
+    if (isNewKeyword) {
+      FB.AppEvents.logEvent('NewKeyword', null, { keyword: tag.name });
+    }
+  }
+
+  clearStorage() {
+    chrome.storage.sync.remove('keywords');
+    window.location.href = '';
   }
 
   render () {
     return (
       <div>
-        <h3>My Interests</h3>
+        <h3>My Interests <small onClick={this.clearStorage} title="Clear Storage" style={{float: 'right', cursor: 'pointer', color: '#777'}}>✕</small></h3>
         <ReactTags
           tags={this.state.tags}
           suggestions={this.state.suggestions}

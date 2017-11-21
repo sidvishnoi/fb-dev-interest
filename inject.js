@@ -17,6 +17,19 @@ fbDevInterest.createElement = function(type, options) {
   return el;
 }
 
+// clears localStorage of extension in case of out of quota
+fbDevInterest.clearLocalStorage = function() {
+  const keys = Object.keys(localStorage);
+  let count = 0;
+  for (const key of keys) {
+    if (key.startsWith('https://graph.facebook.com/v2.11/')) {
+      localStorage.removeItem(key);
+      ++count;
+    }
+    if (count === 10) return; // let's delete just 10 items for now
+  }
+};
+
 fbDevInterest.BASE_API_URL = `https://graph.facebook.com/v2.11/GROUPID/?&access_token=${fbDevInterest._apiKey}&fields=name,id,feed{message,id,name,from,permalink_url,full_picture,link,created_time}`;
 fbDevInterest.COMMENTS_API_URL = `https://graph.facebook.com/v2.11/POSTID/?&access_token=${fbDevInterest._apiKey}&fields=comments{from,permalink_url,message,created_time,comments{from,permalink_url,message,created_time}},permalink_url`
 
@@ -237,7 +250,12 @@ fbDevInterest.getComments = function(postid, parent) {
     .then(res => res.json())
     .then((json) => {
       json.last_fetch_time = new Date();
-      localStorage.setItem(fetchUrl, JSON.stringify(json));
+      try {
+        localStorage.setItem(fetchUrl, JSON.stringify(json));
+      } catch (e) {
+        // out of storage? don't store and clear items for extension
+        self.clearLocalStorage();
+      }
       self.requestList.delete(fetchUrl);
       self.showComments(json, commentsArea);
     })
@@ -478,7 +496,12 @@ fbDevInterest.getGroupFeed = function(options) {
     .then((res) => res.json())
     .then((json) => {
       json.last_fetch_time = new Date();
-      localStorage.setItem(fetchUrl, JSON.stringify(json));
+      try {
+        localStorage.setItem(fetchUrl, JSON.stringify(json));
+      } catch(e) {
+        // out of storage? don't store and clear items for extension
+        self.clearLocalStorage();
+      }
       self.requestList.delete(fetchUrl);
       handleJsonResponse(json);
     })

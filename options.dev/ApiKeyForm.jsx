@@ -1,10 +1,12 @@
 const React = require('react');
 const ReactDOM = require('react-dom');
 
+const defaultAppToken = '148818419074509|CrToch6NqQe-mDJ8601f7HU_-3I';
+
 class ApiKeyForm extends React.Component {
   constructor() {
     super();
-    this.state = { value: '', status: 'Set API Key' };
+    this.state = { value: defaultAppToken, status: 'Set API Key' };
     chrome.storage.sync.get('apikey', (res) => {
       if (res.apikey)
         this.setState({ value: res.apikey, status: 'Modify API Key' });
@@ -26,6 +28,9 @@ class ApiKeyForm extends React.Component {
         self.setState({ status: 'Modify API Key' })
       }, 1500);
     });
+    if (self.state.value !== defaultAppToken) {
+      FB.AppEvents.logEvent('UsedCustomAppToken');
+    }
   }
 
   render() {

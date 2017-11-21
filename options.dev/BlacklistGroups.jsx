@@ -50,10 +50,15 @@ class BlacklistGroups extends React.Component {
     chrome.storage.sync.set({ groups: blacklistedGroupIds });
   }
 
+  clearStorage() {
+    chrome.storage.sync.remove('keywords');
+    window.location.href = '';
+  }
+
   render () {
     return (
       <div>
-        <h3>Blacklist Groups</h3>
+        <h3>Blacklist Groups <small onClick={this.clearStorage} title="Clear Storage" style={{float: 'right', cursor: 'pointer', color: '#777'}}>✕</small></h3>
         <ReactTags
           tags={this.state.tags}
           suggestions={this.state.suggestions}

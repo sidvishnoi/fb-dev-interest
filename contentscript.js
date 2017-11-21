@@ -107,6 +107,7 @@ asyncParallel({
     utils: cb => injectScriptFile('utils.js', cb),
     groups: cb => injectScriptFile('groups.js', cb),
     inject: cb => injectScriptFile('inject.js', cb),
+    analytics: cb => injectScriptFile('options/analytics.js', cb),
   }, (err, res) => {
     injectScriptText(`
       console.log('<<< fbDevInterest >>>');
