@@ -100,6 +100,23 @@ I would love your PRs. You can contribute :
 - letting me know of additions/removals of public Dev circle groups (edit: [/options.dev/groups.js](/options.dev/groups.js), you may use [/scrape-group-lists.js](/scrape-group-lists.js)).
 - Make the extension better. Fix bugs, if found. Add more features. Improve existing features.
 
+## Instructions for Developers
+
+To rebuild the extension:
+``` bash
+$ git clone https://github.com/sidvishnoi/fb-dev-interest.git
+$ cd fb-dev-interest
+$ npm install
+$ npm run build # builds the dist folder only, run after each edit
+```
+
+You can load the dist folder in Chrome from the chrome://extensions/ page in Developer Mode to install the extension.
+
+To create the extension's CRX file, use the Google Chrome Browser: https://developer.chrome.com/extensions/packaging. Use the `dist` folder to create package.
+The CRX file can be installed by a simple drag and drop in chrome://extensions/ page.
+
+Rename the .crx file from `dist.crx` to `Merge Facebook Dev Circles by Interests.crx` and `dist.pem` to `key.pem` to create a release.
+
 ## Todo
 
 - More interactive feed.
