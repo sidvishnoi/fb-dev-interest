@@ -9,10 +9,21 @@
 ## Vision
 
 Instead of having dev circles according to locations, we can now have posts from various dev circles based on our interests.
+Developers are generally interested in a common set of coding languages and they work on a predefined tech stack and as the community grows, the group communication becomes difficult also sub groups gets difficult to manage which makes the community weak even after having so many members. The Vision is to maintain that community and show relevant content to group users as much as possible.
+
+We are starting with Facebook Dev circles and soon will be making it general for every Tech group on Facebook and in the long run we want the extension to be available for every other group based on how users use it.
+
 
 ## What is it?
 
 It is a Google Chrome extension that replaces the feed of your Facebook Dev Circle group according to your interests.
+
+
+## How it helps Developers?
+
+The most important asset for a Developer is time. Getting the job done in a minimal time is the most important task. People use Dev Circles to ask question or to help. At times, post gets missed due to the number of posts which depletes the purpose of the group. 
+The extension allows Developers to see every post from every Dev C group which makes the community closer and can lead to have better answers to their queries and better chances of collaborating from all around the world.
+
 
 ## What does it do?
 
