@@ -21,7 +21,7 @@ It is a Google Chrome extension that replaces the feed of your Facebook Dev Circ
 
 ## How it helps Developers?
 
-The most important asset for a Developer is time. Getting the job done in a minimal time is the most important task. People use Dev Circles to ask question or to help. At times, post gets missed due to the number of posts which depletes the purpose of the group. 
+The most important asset for a Developer is time. Getting the job done in a minimal time is the most important task. People use Dev Circles to ask question or to help. At times, post gets missed due to the number of posts which depletes the purpose of the group.
 The extension allows Developers to see every post from every Dev C group which makes the community closer and can lead to have better answers to their queries and better chances of collaborating from all around the world.
 
 
@@ -35,7 +35,7 @@ It has some pre-defined tags that help you add your keywords easily. You also ha
 
 It uses the graph API to fetch feeds from various dev circle groups.
 
-## [Download the extension (.crx)](https://github.com/sidvishnoi/fb-dev-interest/releases/download/v1.2/Merge.Facebook.Dev.Circles.by.Interests.crx)
+## [Download the extension (.crx)](https://github.com/sidvishnoi/fb-dev-interest/releases/download/v1.3/Merge.Facebook.Dev.Circles.by.Interests.crx)
 
 
 # Screenshots
