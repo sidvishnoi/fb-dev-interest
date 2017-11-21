@@ -103,4 +103,6 @@ I would love your PRs. You can contribute :
 ## Todo
 
 - More interactive feed.
+- Get App Token through login SDK.
+- Track keywords with Facebook Analytics SDK.
 - Firefox add-on maybe?
