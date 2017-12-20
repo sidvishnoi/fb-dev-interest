@@ -62,7 +62,7 @@ It uses the graph API to fetch feeds from various dev circle groups.
 
 ## Note
 
-The above mentioned method might not work due to an an update to Google Chrome 63 (See: https://bugs.chromium.org/p/chromium/issues/detail?id=794219) (Thanks to Stephanie from Devpost for reporting)
+The above mentioned method might not work due to an an update to Google Chrome 63 (See: https://bugs.chromium.org/p/chromium/issues/detail?id=794219) (Thanks to Stefanie M from Devpost for reporting)
 
 The following method will work on all versions of Chrome:
 
