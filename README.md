@@ -37,6 +37,7 @@ It uses the graph API to fetch feeds from various dev circle groups.
 
 ## [Download the extension (.crx)](https://github.com/sidvishnoi/fb-dev-interest/releases/download/v1.3/Merge.Facebook.Dev.Circles.by.Interests.crx)
 
+(See How to Install and Note below)
 
 # Screenshots
 
@@ -58,6 +59,19 @@ It uses the graph API to fetch feeds from various dev circle groups.
 2. Drag and Drop downloaded file into Google Chrome's Extensions page (`chrome://extensions/`).
 3. Install the extension by clicking Install button.
 4. Go to extension's options and configure.
+
+## Note
+
+The above mentioned method might not work due to an an update to Google Chrome 63 (See: https://bugs.chromium.org/p/chromium/issues/detail?id=794219) (Thanks to Stephanie from Devpost for reporting)
+
+The following method will work on all versions of Chrome:
+
+1. Downlod the extension (`fb-dev-interest-unpacked.zip`) from the [releases page](https://github.com/sidvishnoi/fb-dev-interest/releases) and Unzip the downloaded file.
+2. Go to `chrome://extensions/` and click the checkbox to enable **Developer mode**.
+3. Click the **Load unpacked extension** button and select the unzipped folder.
+4. Install it as prompted and now you can have the extension's equivalent. Go to extension's options and configure and use it.
+
+I'll update the upcoming releases and release v1.3 to have the `fb-dev-interest-unpacked.zip` file. The .crx files won't be added to new releases until the update can be resolved.
 
 # Configure
 
