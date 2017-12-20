@@ -79,6 +79,8 @@ I'll update the upcoming releases and release v1.3 to have the `fb-dev-interest-
 
 Get your app token from [https://developers.facebook.com/tools/accesstoken/](https://developers.facebook.com/tools/accesstoken/). You might need to create a Facebook Developer Account and/or a app. Create an app if not exists and get the `App Token` (not User Token) and paste in App Token field in extension's options page.
 
+Although a default app token is added to the app, you are recommended to not to use it. It is for testing purposes only and you still need to "Set" it as it is not saved in your settings by default.
+
 The App Token is needed to authenticate Facebook's Graph API requests.
 
 ### My Interests
