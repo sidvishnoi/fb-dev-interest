@@ -5,6 +5,9 @@
 [![Merge Facebook Dev Circles by Interests](https://i.imgur.com/evnMkm8.jpg)](https://www.youtube.com/watch?v=yJPD3iW6ZvY)
 *https://www.youtube.com/watch?v=yJPD3iW6ZvY*
 
+> Won Developer Circles Community Challenge by Facebook \
+> as "Best App by a Student Team". Hurray! \
+> See: https://devpost.com/software/fb-dev-interest
 
 ## Vision
 
